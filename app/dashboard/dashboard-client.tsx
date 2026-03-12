@@ -35,6 +35,7 @@ export default function DashboardClient({ user }: { user: UserWithAccounts }) {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordLoading, setPasswordLoading] = useState(false);
 
+  // Restore original logic while handling Drizzle's nullable types
   const membershipLevel = user.membershipLevel ?? 0;
   const isPremium = membershipLevel > 0 && (!user.vipUntil || new Date(user.vipUntil) > new Date());
   const hasAccount = user.mt5Accounts.length > 0;
@@ -138,7 +139,7 @@ export default function DashboardClient({ user }: { user: UserWithAccounts }) {
 
   const tools = [
     { id: "sessionVolumeProfile-pro", name: "Session Volume Profile Pro", desc: t("tools.t1.desc") },
-    { id: "liquidity-sweeps", name: "Liquidity Sweeps Indicator", desc: "流动性猎杀追踪工具" }, // You can also add translations for these if needed
+    { id: "liquidity-sweeps", name: "Liquidity Sweeps Indicator", desc: "流动性猎杀追踪工具" }, 
     { id: "orderblock-finder", name: "OrderBlock Finder EA", desc: "机构订单块自动识别EA" },
   ];
 
@@ -150,8 +151,8 @@ export default function DashboardClient({ user }: { user: UserWithAccounts }) {
           <h1 className="text-3xl font-bold mb-2">{t("dashboard.welcome")}, {user.name || user.email?.split("@")[0]}</h1>
           <p className="text-gray-400">{t("dashboard.subtitle")}</p>
         </div>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => setIsPasswordModalOpen(true)}
           className="border-white/10 text-gray-300 hover:text-white hover:bg-white/5"
         >
@@ -221,13 +222,15 @@ export default function DashboardClient({ user }: { user: UserWithAccounts }) {
               ) : (
                 <div className="text-left md:text-right">
                   <p className="font-mono text-2xl font-bold text-white">{currentAccount.accountId}</p>
-                  <p className="text-xs text-gray-500 mt-1">{t("dashboard.bound_at")} {new Date(currentAccount.createdAt).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {t("dashboard.bound_at")} {currentAccount.createdAt ? new Date(currentAccount.createdAt).toLocaleDateString() : "-"}
+                  </p>
                 </div>
               )}
               
-              <Button 
+              <Button
                 onClick={handleOpenModal}
-                variant="outline" 
+                variant="outline"
                 className="w-full md:w-auto border-[#00ff88] text-[#00ff88] hover:bg-[#00ff88]/10 px-6"
               >
                 <Edit2 size={16} className="mr-2" />
@@ -251,7 +254,7 @@ export default function DashboardClient({ user }: { user: UserWithAccounts }) {
                 <h3 className="font-bold text-lg mb-1">{tool.name}</h3>
                 <p className="text-sm text-gray-400 mb-6">{tool.desc}</p>
               </div>
-              <Button 
+              <Button
                 onClick={() => handleDownloadClick(tool.id)}
                 className="w-full bg-white/10 hover:bg-[#00ff88] hover:text-black transition-colors"
               >
@@ -284,16 +287,16 @@ export default function DashboardClient({ user }: { user: UserWithAccounts }) {
               </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <div className="flex gap-3 pt-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => { setIsAddModalOpen(false); setError(null); }}
                   className="flex-1 border-white/20"
                 >
                   {t("dashboard.cancel")}
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={loading}
                   className="flex-1 bg-[#00ff88] text-black hover:bg-[#00cc6a]"
                 >
@@ -328,15 +331,15 @@ export default function DashboardClient({ user }: { user: UserWithAccounts }) {
               </div>
 
               <div className="flex gap-3 pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setIsDownloadModalOpen(false)}
                   className="flex-1 border-white/20"
                 >
                   {t("dashboard.cancel")}
                 </Button>
-                <Button 
+                <Button
                   onClick={handleConfirmDownload}
                   disabled={loading || !selectedAccount}
                   className="flex-1 bg-[#00ff88] text-black hover:bg-[#00cc6a]"
@@ -389,11 +392,11 @@ export default function DashboardClient({ user }: { user: UserWithAccounts }) {
               </div>
               {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
               <div className="flex gap-3 pt-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => { 
-                    setIsPasswordModalOpen(false); 
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsPasswordModalOpen(false);
                     setPasswordError(null);
                     setCurrentPassword("");
                     setNewPassword("");
@@ -403,8 +406,8 @@ export default function DashboardClient({ user }: { user: UserWithAccounts }) {
                 >
                   {t("dashboard.cancel")}
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={passwordLoading}
                   className="flex-1 bg-[#00ff88] text-black hover:bg-[#00cc6a]"
                 >
