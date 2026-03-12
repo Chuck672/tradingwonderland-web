@@ -1,7 +1,7 @@
 import { getAuthSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { users } from "@/lib/schema";
+import { users, mt5Accounts } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import DashboardClient from "./dashboard-client";
 
@@ -11,25 +11,33 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, session.user.id),
-    with: {
-      mt5Accounts: true,
-    },
-  });
+  // Use separate queries instead of db.query.users.findFirst to avoid LATERAL joins
+  // which are not supported in older MySQL/MariaDB versions on Hostinger
+  
+  // 1. Fetch user
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
 
   if (!user) {
     redirect("/login");
   }
 
-  // Ensure types match what DashboardClient expects (handling nulls from Drizzle schema)
+  // 2. Fetch MT5 accounts
+  const userMt5Accounts = await db
+    .select()
+    .from(mt5Accounts)
+    .where(eq(mt5Accounts.userId, user.id));
+
+  // Combine data
   const safeUser = {
     ...user,
     membershipLevel: user.membershipLevel ?? 0,
     createdAt: user.createdAt ?? new Date(),
     updatedAt: user.updatedAt ?? new Date(),
-    // Ensure mt5Accounts createdAt is also non-null if needed, but DashboardClient only checks length/accountId usually
-    mt5Accounts: user.mt5Accounts.map(acc => ({
+    mt5Accounts: userMt5Accounts.map(acc => ({
       ...acc,
       createdAt: acc.createdAt ?? new Date()
     }))
