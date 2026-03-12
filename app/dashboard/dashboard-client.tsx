@@ -3,12 +3,16 @@
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Mt5Account } from "@prisma/client";
+import { users, mt5Accounts } from "@/lib/schema";
+import { InferSelectModel } from "drizzle-orm";
 import { useState } from "react";
 import { saveMt5Account } from "@/app/actions/mt5";
 import { changePassword } from "@/app/actions/auth";
 import { Download, Edit2, Crown, CheckCircle2, AlertCircle, KeyRound } from "lucide-react";
 import Link from "next/link";
+
+type User = InferSelectModel<typeof users>;
+type Mt5Account = InferSelectModel<typeof mt5Accounts>;
 
 type UserWithAccounts = User & {
   mt5Accounts: Mt5Account[];
