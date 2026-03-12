@@ -35,7 +35,8 @@ export default function DashboardClient({ user }: { user: UserWithAccounts }) {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordLoading, setPasswordLoading] = useState(false);
 
-  const isPremium = user.membershipLevel > 0 && (!user.vipUntil || new Date(user.vipUntil) > new Date());
+  const membershipLevel = user.membershipLevel ?? 0;
+  const isPremium = membershipLevel > 0 && (!user.vipUntil || new Date(user.vipUntil) > new Date());
   const hasAccount = user.mt5Accounts.length > 0;
   const currentAccount = hasAccount ? user.mt5Accounts[0] : null;
 
