@@ -1,6 +1,8 @@
 import { getAuthSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { users } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 import DashboardClient from "./dashboard-client";
 
 export default async function DashboardPage() {
@@ -9,14 +11,29 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    include: { mt5Accounts: true },
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, session.user.id),
+    with: {
+      mt5Accounts: true,
+    },
   });
 
   if (!user) {
     redirect("/login");
   }
 
-  return <DashboardClient user={user} />;
+  // Ensure types match what DashboardClient expects (handling nulls from Drizzle schema)
+  const safeUser = {
+    ...user,
+    membershipLevel: user.membershipLevel ?? 0,
+    createdAt: user.createdAt ?? new Date(),
+    updatedAt: user.updatedAt ?? new Date(),
+    // Ensure mt5Accounts createdAt is also non-null if needed, but DashboardClient only checks length/accountId usually
+    mt5Accounts: user.mt5Accounts.map(acc => ({
+      ...acc,
+      createdAt: acc.createdAt ?? new Date()
+    }))
+  };
+
+  return <DashboardClient user={safeUser} />;
 }

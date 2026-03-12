@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { users } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 
 // MT5 WebRequest Verification Endpoint
 // Expected GET request: /api/mt5/verify?email=user@example.com&account=12345678&tool=sessionVolumeProfile-pro
@@ -18,9 +20,11 @@ export async function GET(request: Request) {
     }
 
     // 1. Find user by email
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: { mt5Accounts: true },
+    const user = await db.query.users.findFirst({
+      where: eq(users.email, email),
+      with: {
+        mt5Accounts: true,
+      },
     });
 
     if (!user) {
@@ -31,7 +35,7 @@ export async function GET(request: Request) {
     }
 
     // 2. Check if user is Premium and not expired
-    const isPremium = user.membershipLevel > 0;
+    const isPremium = (user.membershipLevel || 0) > 0;
     const isNotExpired = !user.vipUntil || new Date(user.vipUntil) > new Date();
 
     if (!isPremium || !isNotExpired) {

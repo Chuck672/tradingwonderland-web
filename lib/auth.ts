@@ -1,12 +1,15 @@
 import { NextAuthOptions, getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { prisma } from "./prisma";
+import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import { db } from "./db";
+import { users } from "./schema";
+import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { Adapter } from "next-auth/adapters";
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: DrizzleAdapter(db) as Adapter,
   session: {
     strategy: "jwt",
   },
@@ -29,8 +32,8 @@ export const authOptions: NextAuthOptions = {
           throw new Error("请输入邮箱和密码");
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+        const user = await db.query.users.findFirst({
+          where: eq(users.email, credentials.email),
         });
 
         if (!user || !user.password) {
@@ -50,7 +53,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          membershipLevel: user.membershipLevel,
+          membershipLevel: user.membershipLevel ?? 0,
           vipUntil: user.vipUntil,
         };
       },

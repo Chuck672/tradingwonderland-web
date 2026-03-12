@@ -1,6 +1,8 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { mt5Accounts } from "@/lib/schema";
+import { eq, inArray } from "drizzle-orm";
 import { getAuthSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
@@ -23,31 +25,25 @@ export async function saveMt5Account(formData: FormData) {
 
   try {
     // Check if user already has an account
-    const existingAccounts = await prisma.mt5Account.findMany({
-      where: { userId: session.user.id },
-    });
+    const existingAccounts = await db.select().from(mt5Accounts).where(eq(mt5Accounts.userId, session.user.id));
 
     if (existingAccounts.length > 0) {
       // Update the first one and delete any others just in case
       const [first, ...rest] = existingAccounts;
       
-      await prisma.mt5Account.update({
-        where: { id: first.id },
-        data: { accountId: accountId.trim() }
-      });
+      await db.update(mt5Accounts)
+        .set({ accountId: accountId.trim() })
+        .where(eq(mt5Accounts.id, first.id));
 
       if (rest.length > 0) {
-        await prisma.mt5Account.deleteMany({
-          where: { id: { in: rest.map(r => r.id) } }
-        });
+        await db.delete(mt5Accounts)
+          .where(inArray(mt5Accounts.id, rest.map(r => r.id)));
       }
     } else {
       // Create new
-      await prisma.mt5Account.create({
-        data: {
-          userId: session.user.id,
-          accountId: accountId.trim(),
-        },
+      await db.insert(mt5Accounts).values({
+        userId: session.user.id,
+        accountId: accountId.trim(),
       });
     }
 

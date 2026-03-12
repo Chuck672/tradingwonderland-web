@@ -1,6 +1,8 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { users } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { sendEmail } from "@/lib/email";
 import { getAuthSession } from "@/lib/auth";
@@ -15,8 +17,8 @@ export async function registerUser(formData: FormData) {
   }
 
   try {
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
+    const existingUser = await db.query.users.findFirst({
+      where: eq(users.email, email),
     });
 
     if (existingUser) {
@@ -25,12 +27,10 @@ export async function registerUser(formData: FormData) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-      },
+    await db.insert(users).values({
+      name,
+      email,
+      password: hashedPassword,
     });
 
     return { success: true };
@@ -48,8 +48,8 @@ export async function resetPassword(formData: FormData) {
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { email },
+    const user = await db.query.users.findFirst({
+      where: eq(users.email, email),
     });
 
     if (!user) {
@@ -63,10 +63,9 @@ export async function resetPassword(formData: FormData) {
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
     // Update user password
-    await prisma.user.update({
-      where: { email },
-      data: { password: hashedPassword },
-    });
+    await db.update(users)
+      .set({ password: hashedPassword })
+      .where(eq(users.email, email));
 
     // Send email
     const html = `
@@ -120,8 +119,8 @@ export async function changePassword(formData: FormData) {
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+    const user = await db.query.users.findFirst({
+      where: eq(users.email, session.user.email),
     });
 
     if (!user || !user.password) {
@@ -136,10 +135,9 @@ export async function changePassword(formData: FormData) {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    await prisma.user.update({
-      where: { email: session.user.email },
-      data: { password: hashedPassword },
-    });
+    await db.update(users)
+      .set({ password: hashedPassword })
+      .where(eq(users.email, session.user.email));
 
     return { success: true };
   } catch (error) {
