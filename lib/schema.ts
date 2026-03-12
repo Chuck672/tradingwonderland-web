@@ -11,7 +11,7 @@ import {
 import { relations, sql } from "drizzle-orm";
 import { type AdapterAccount } from "@auth/core/adapters";
 
-export const users = mysqlTable("User", {
+export const users = mysqlTable("user", {
   id: varchar("id", { length: 255 })
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
@@ -27,7 +27,7 @@ export const users = mysqlTable("User", {
 });
 
 export const accounts = mysqlTable(
-  "Account",
+  "account",
   {
     id: varchar("id", { length: 255 })
       .primaryKey()
@@ -51,7 +51,7 @@ export const accounts = mysqlTable(
   })
 );
 
-export const sessions = mysqlTable("Session", {
+export const sessions = mysqlTable("session", {
   id: varchar("id", { length: 255 })
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
@@ -63,7 +63,7 @@ export const sessions = mysqlTable("Session", {
 });
 
 export const verificationTokens = mysqlTable(
-  "VerificationToken",
+  "verification_token",
   {
     identifier: varchar("identifier", { length: 255 }).notNull(),
     token: varchar("token", { length: 255 }).unique().notNull(),
@@ -75,7 +75,7 @@ export const verificationTokens = mysqlTable(
 );
 
 export const mt5Accounts = mysqlTable(
-  "Mt5Account",
+  "mt5_account",
   {
     id: varchar("id", { length: 255 })
       .primaryKey()
