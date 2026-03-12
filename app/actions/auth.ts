@@ -105,3 +105,49 @@ export async function resetPassword(formData: FormData) {
     return { error: "重置密码失败，请稍后重试" };
   }
 }
+
+export async function changePassword(formData: FormData) {
+  const session = await getAuthSession();
+  
+  if (!session?.user?.email) {
+    return { error: "未登录或会话已过期" };
+  }
+
+  const currentPassword = formData.get("currentPassword") as string;
+  const newPassword = formData.get("newPassword") as string;
+
+  if (!currentPassword || !newPassword) {
+    return { error: "密码不能为空" };
+  }
+
+  if (newPassword.length < 6) {
+    return { error: "新密码长度至少为6位" };
+  }
+
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.email, session.user.email),
+    });
+
+    if (!user || !user.password) {
+      return { error: "用户不存在" };
+    }
+
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isPasswordValid) {
+      return { error: "当前密码错误" };
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await db.update(users)
+      .set({ password: hashedPassword })
+      .where(eq(users.email, session.user.email));
+
+    return { success: true };
+  } catch (error) {
+    console.error("Change password error:", error);
+    return { error: "修改密码失败，请稍后重试" };
+  }
+}
