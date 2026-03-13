@@ -5,16 +5,6 @@ import { Button } from "@/components/ui/button";
 import { TradingChart } from "@/components/chart";
 import { motion } from "motion/react";
 
-import { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "首页 - 绿洲交易社区 | 外汇交易课程与AI量化工具平台",
-  description: "欢迎来到绿洲交易社区。我们提供从零基础到高阶的外汇交易课程、独家MT5交易指标、AI自动交易机器人(EA)以及活跃的交易员社区。立即开启您的专业交易之旅。",
-  alternates: {
-    canonical: "/",
-  },
-};
-
 export default function Home() {
   const { t } = useLanguage();
 
