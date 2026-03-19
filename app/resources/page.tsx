@@ -11,7 +11,7 @@ export default function ResourcesPage() {
 
   const courses = [
     { title: t("courses.c1.title"), desc: t("courses.c1.desc"), href: "/resources/psychology" },
-    { title: t("courses.c2.title"), desc: t("courses.c2.desc"), href: "#" },
+    { title: t("courses.c2.title"), desc: t("courses.c2.desc"), href: "/priceaction_course.html" },
     { title: t("courses.c3.title"), desc: t("courses.c3.desc"), href: "#" },
   ];
 
@@ -49,11 +49,19 @@ export default function ResourcesPage() {
                   <CardDescription className="mt-2">{course.desc}</CardDescription>
                 </CardHeader>
                 <CardFooter className="justify-center mt-auto pb-6">
-                  <Link href={course.href} className="w-full">
-                    <Button variant="outline" className="border-[#00ff88] text-[#00ff88] hover:bg-[#00ff88] hover:text-black w-full">
-                      {t("btn.start")}
-                    </Button>
-                  </Link>
+                  {course.href.endsWith('.html') ? (
+                    <a href={course.href} target="_blank" rel="noopener noreferrer" className="w-full">
+                      <Button variant="outline" className="border-[#00ff88] text-[#00ff88] hover:bg-[#00ff88] hover:text-black w-full">
+                        {t("btn.start")}
+                      </Button>
+                    </a>
+                  ) : (
+                    <Link href={course.href} className="w-full">
+                      <Button variant="outline" className="border-[#00ff88] text-[#00ff88] hover:bg-[#00ff88] hover:text-black w-full">
+                        {t("btn.start")}
+                      </Button>
+                    </Link>
+                  )}
                 </CardFooter>
               </Card>
             </motion.div>
