@@ -33,3 +33,8 @@ pnpm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# nested course project
+priceaction_courses/node_modules/
+priceaction_courses/dist/
+priceaction_courses/.env*
