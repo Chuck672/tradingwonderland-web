@@ -16,8 +16,12 @@ export const metadata: Metadata = {
     canonical: "https://tradingwonderland.com",
   },
   icons: {
-    icon: '/icon.png',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png' },
+    ],
     apple: '/apple-icon.png',
+    shortcut: '/icon.png',
   },
   openGraph: {
     title: '绿洲交易社区 (Trading WonderLand)',

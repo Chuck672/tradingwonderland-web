@@ -12,7 +12,7 @@ export default function ResourcesPage() {
   const courses = [
     { title: t("courses.c1.title"), desc: t("courses.c1.desc"), href: "/resources/psychology" },
     { title: t("courses.c2.title"), desc: t("courses.c2.desc"), href: "/priceaction_course.html" },
-    { title: t("courses.c3.title"), desc: t("courses.c3.desc"), href: "#" },
+    { title: t("courses.c3.title"), desc: t("courses.c3.desc"), href: "/volumeprofile_course.html" },
   ];
 
   const strategies = [

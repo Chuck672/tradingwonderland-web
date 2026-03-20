@@ -38,3 +38,7 @@ next-env.d.ts
 priceaction_courses/node_modules/
 priceaction_courses/dist/
 priceaction_courses/.env*
+
+volumeprofile_courses/node_modules/
+volumeprofile_courses/dist/
+volumeprofile_courses/.env*
