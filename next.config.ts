@@ -19,10 +19,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  generateBuildId: async () => {
-    // Generate a unique build ID based on timestamp to force cache invalidation on deployment
-    return `build-${Date.now()}`;
-  },
+//  generateBuildId: async () => {
+//    // Generate a unique build ID based on timestamp to force cache invalidation on deployment
+//    return `build-${Date.now()}`;
+//  },
   transpilePackages: ['motion'],
   webpack: (config, {dev}) => {
     // HMR is disabled in AI Studio via DISABLE_HMR env var.
