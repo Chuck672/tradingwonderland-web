@@ -19,7 +19,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  output: 'standalone',
   generateBuildId: async () => {
     // Generate a unique build ID based on timestamp to force cache invalidation on deployment
     return `build-${Date.now()}`;
