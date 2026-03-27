@@ -11,23 +11,74 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { planId } = body;
+    const { planId, amount, currency = "HKD" } = body;
 
     if (!planId) {
       return new NextResponse("Plan ID is required", { status: 400 });
     }
 
-    // You should ideally replace these with actual Stripe Price IDs from your dashboard
-    // e.g. priceId: process.env.STRIPE_EDGE_PRICE_ID
-    const planDetails: Record<string, { name: string; price: number; level: number }> = {
-      edge: { name: "Edge Plan", price: 9900, level: 1 },      // $99.00
-      hawkeye: { name: "HawkEye Plan", price: 19900, level: 2 }, // $199.00
-      quantum: { name: "Quantum Plan", price: 29900, level: 3 }, // $299.00
+    const priceIds: Record<string, Record<string, string>> = {
+      basic: {
+        HKD: "price_1TFd5ABNhc7JJK4wEQYsytJy",
+        CNY: "price_1TFd5ABNhc7JJK4wBzpZdevy",
+        USD: "price_1TFd5ABNhc7JJK4wbeaZUGW1",
+      },
+      advanced: {
+        HKD: "price_1TFdDGBNhc7JJK4wqmITFRfy",
+        CNY: "price_1TFdDGBNhc7JJK4wQeAyJcMU",
+        USD: "price_1TFdDGBNhc7JJK4wagM9TyaQ",
+      },
     };
 
-    const plan = planDetails[planId];
-    if (!plan) {
-      return new NextResponse("Invalid Plan ID", { status: 400 });
+    const planLevelMap: Record<string, number> = {
+      basic: 1,
+      advanced: 2,
+    };
+
+    // Special case: donation
+    if (planId === "donation") {
+      const amt = Number(amount);
+      if (!amt || amt < 1000) {
+        return new NextResponse("Invalid donation amount", { status: 400 });
+      }
+      const donationSession = await stripe.checkout.sessions.create({
+        payment_method_types: ["card", "alipay", "wechat_pay"],
+        payment_method_options: {
+          wechat_pay: {
+            client: "web",
+          },
+        },
+        customer_email: session.user.email || undefined,
+        line_items: [
+          {
+            price_data: {
+              currency: "hkd",
+              product_data: {
+                name: "社区赞助（一次性）",
+                description: "用于社区内容更新、工具维护、策略研究与成员答疑服务完善",
+              },
+              unit_amount: amt,
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "payment",
+        success_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/subscribe/success`,
+        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/subscribe/cancel`,
+        metadata: {
+          userId: session.user.id,
+          planId: "donation",
+          level: "0",
+        },
+      });
+      return NextResponse.json({ url: donationSession.url });
+    }
+
+    const priceId = priceIds[planId]?.[currency];
+    const level = planLevelMap[planId];
+
+    if (!priceId) {
+      return new NextResponse("Invalid Plan ID or Currency", { status: 400 });
     }
 
     const checkoutSession = await stripe.checkout.sessions.create({
@@ -40,14 +91,7 @@ export async function POST(req: Request) {
       customer_email: session.user.email || undefined,
       line_items: [
         {
-          price_data: {
-            currency: "hkd",
-            product_data: {
-              name: plan.name,
-              description: "Trading WonderLand Lifetime Access",
-            },
-            unit_amount: plan.price,
-          },
+          price: priceId,
           quantity: 1,
         },
       ],
@@ -57,7 +101,7 @@ export async function POST(req: Request) {
       metadata: {
         userId: session.user.id,
         planId: planId,
-        level: plan.level.toString(),
+        level: level.toString(),
       },
     });
 

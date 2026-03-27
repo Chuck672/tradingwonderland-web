@@ -32,14 +32,14 @@ export async function POST(req: Request) {
 
     if (userId && levelStr) {
       const newLevel = parseInt(levelStr, 10);
-      
+      if (!Number.isFinite(newLevel) || newLevel <= 0) {
+        return new NextResponse("OK", { status: 200 });
+      }
       try {
-        // Update user's membership level in the database
         await db
           .update(users)
           .set({ membershipLevel: newLevel })
           .where(eq(users.id, userId));
-          
         console.log(`Successfully upgraded user ${userId} to level ${newLevel}`);
       } catch (dbError) {
         console.error("Database update failed after successful payment:", dbError);
