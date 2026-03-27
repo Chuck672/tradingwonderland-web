@@ -118,10 +118,10 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ url: checkoutSession.url });
-  } catch (error) {
+  } catch (error: any) {
     console.error("[STRIPE_CHECKOUT]", error);
     return NextResponse.json(
-      { error: "Internal Error" },
+      { error: error?.message || "Internal Error" },
       { status: 500 }
     );
   }
