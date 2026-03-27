@@ -6,6 +6,8 @@ import { Card, CardDescription, CardFooter, CardHeader, CardTitle, CardContent }
 import { loadStripe } from "@stripe/stripe-js";
 import { Check, ChevronRight, Star } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
@@ -13,12 +15,41 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY 
 
 export default function SubscribePage() {
   const { t } = useLanguage();
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (planId: string) => {
+    if (status === "unauthenticated" || !session) {
+      alert("请先登录 / Please login first");
+      router.push("/login");
+      return;
+    }
+
     try {
-      alert("Stripe Checkout Session will be created here.");
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ planId }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          alert("请先登录 / Please login first");
+          window.location.href = "/login";
+          return;
+        }
+        throw new Error("Failed to create checkout session");
+      }
+
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
     } catch (error) {
       console.error("Error:", error);
+      alert("支付初始化失败，请稍后重试。");
     }
   };
 
@@ -109,7 +140,7 @@ export default function SubscribePage() {
             </div>
           </CardContent>
           <CardFooter className="mt-auto pt-6">
-            <Button variant="outline" onClick={handleSubscribe} className="w-full text-md py-6 border-white/20 text-white hover:bg-[#00bfa5] hover:text-black hover:border-[#00bfa5] transition-colors">{t("sub.buy_now")}</Button>
+            <Button variant="outline" onClick={() => handleSubscribe("edge")} className="w-full text-md py-6 border-white/20 text-white hover:bg-[#00bfa5] hover:text-black hover:border-[#00bfa5] transition-colors">{t("sub.buy_now")}</Button>
           </CardFooter>
         </Card>
 
@@ -163,7 +194,7 @@ export default function SubscribePage() {
             </div>
           </CardContent>
           <CardFooter className="mt-auto pt-6">
-            <Button variant="outline" onClick={handleSubscribe} className="w-full text-md py-6 border-white/20 text-white hover:bg-[#00bfa5] hover:text-black hover:border-[#00bfa5] transition-colors">{t("sub.buy_now")}</Button>
+            <Button variant="outline" onClick={() => handleSubscribe("hawkeye")} className="w-full text-md py-6 border-white/20 text-white hover:bg-[#00bfa5] hover:text-black hover:border-[#00bfa5] transition-colors">{t("sub.buy_now")}</Button>
           </CardFooter>
         </Card>
 
@@ -217,7 +248,7 @@ export default function SubscribePage() {
             </div>
           </CardContent>
           <CardFooter className="mt-auto pt-6">
-            <Button variant="outline" onClick={handleSubscribe} className="w-full text-md py-6 border-white/20 text-white hover:bg-purple-500 hover:text-white hover:border-purple-500 transition-colors">{t("sub.buy_now")}</Button>
+            <Button variant="outline" onClick={() => handleSubscribe("quantum")} className="w-full text-md py-6 border-white/20 text-white hover:bg-purple-500 hover:text-white hover:border-purple-500 transition-colors">{t("sub.buy_now")}</Button>
           </CardFooter>
         </Card>
 

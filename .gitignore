@@ -42,3 +42,7 @@ priceaction_courses/.env*
 volumeprofile_courses/node_modules/
 volumeprofile_courses/dist/
 volumeprofile_courses/.env*
+
+priceactiontradingmanual/node_modules/
+priceactiontradingmanual/dist/
+priceactiontradingmanual/.env*

@@ -14,14 +14,22 @@ export const metadata: Metadata = {
   keywords: ['绿洲交易社区', 'Trading WonderLand', '交易学习', '外汇交易课程', '交易工具', '交易高级指标', 'AI量化工具', '订单流', 'Trading Learning', 'Forex Trading Course', 'Trading Tools', 'Order Flow', 'Quantitative Trading'],
   alternates: {
     canonical: "https://tradingwonderland.com",
+    languages: {
+      "zh-CN": "https://tradingwonderland.com/",
+      "zh-HK": "https://tradingwonderland.com/",
+      "zh-TW": "https://tradingwonderland.com/",
+      "zh-Hant": "https://tradingwonderland.com/",
+      "en": "https://tradingwonderland.com/",
+      "x-default": "https://tradingwonderland.com/"
+    }
   },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icon.png', type: 'image/png' },
+      { url: '/favicon.png', type: 'image/png' },
     ],
     apple: '/apple-icon.png',
-    shortcut: '/icon.png',
+    shortcut: '/favicon.png',
   },
   openGraph: {
     title: '绿洲交易社区 (Trading WonderLand)',
@@ -45,7 +53,30 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
               "name": "绿洲交易社区",
               "alternateName": "Trading WonderLand",
               "url": "https://tradingwonderland.com/",
-              "logo": "https://tradingwonderland.com/icon.png"
+              "publisher": {
+                "@type": "Organization",
+                "name": "绿洲交易社区 (Trading WonderLand)",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": "https://tradingwonderland.com/favicon.png"
+                }
+              }
+            })
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "绿洲交易社区 (Trading WonderLand)",
+              "url": "https://tradingwonderland.com/",
+              "logo": "https://tradingwonderland.com/favicon.png",
+              "sameAs": [
+                "https://www.youtube.com/@tradingwonderland",
+                "https://twitter.com/tradingwonderland"
+              ]
             })
           }}
         />

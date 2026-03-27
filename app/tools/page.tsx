@@ -10,11 +10,11 @@ export default function ToolsPage() {
   const { t } = useLanguage();
 
   const tools = [
-    { id: "sessionVolumeProfile-pro", title: t("tools.t1.title"), desc: t("tools.t1.desc") },
+    { id: "SVP5_pro", title: t("tools.t1.title"), desc: t("tools.t1.desc") },
     { id: "inRangeVolumeProfile", title: t("tools.t2.title"), desc: t("tools.t2.desc") },
-    { id: "scalpQuickButton", title: t("tools.t3.title"), desc: t("tools.t3.desc") },
+    { id: "scalpTradingPanel", title: t("tools.t3.title"), desc: t("tools.t3.desc") },
     { id: "strengthBubble_pro", title: t("tools.t4.title"), desc: t("tools.t4.desc") },
-    { id: "XAUUSD_footprint", title: t("tools.t5.title"), desc: t("tools.t5.desc") },
+    { id: "Trend_Panel9_pro", title: t("tools.t5.title"), desc: t("tools.t5.desc") },
     { id: "XAUUSD_monitor", title: t("tools.t6.title"), desc: t("tools.t6.desc") },
   ];
 
