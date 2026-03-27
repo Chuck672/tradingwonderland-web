@@ -53,16 +53,16 @@ export default function SubscribePage() {
         body: JSON.stringify(payload),
       });
 
+      const data = await response.json();
       if (!response.ok) {
         if (response.status === 401) {
           alert("请先登录 / Please login first");
           window.location.href = "/login";
           return;
         }
-        throw new Error("Failed to create checkout session");
+        throw new Error(data.message || data.error || "Failed to create checkout session");
       }
 
-      const data = await response.json();
       if (data.url) {
         window.location.href = data.url;
       }

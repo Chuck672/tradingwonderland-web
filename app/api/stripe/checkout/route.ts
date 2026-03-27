@@ -7,14 +7,20 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const body = await req.json();
     const { planId, amount, currency = "HKD" } = body;
 
     if (!planId) {
-      return new NextResponse("Plan ID is required", { status: 400 });
+      return NextResponse.json(
+        { error: "Plan ID is required" },
+        { status: 400 }
+      );
     }
 
     const priceIds: Record<string, Record<string, string>> = {
@@ -39,7 +45,10 @@ export async function POST(req: Request) {
     if (planId === "donation") {
       const amt = Number(amount);
       if (!amt || amt < 1000) {
-        return new NextResponse("Invalid donation amount", { status: 400 });
+        return NextResponse.json(
+          { error: "Invalid donation amount" },
+          { status: 400 }
+        );
       }
       const donationSession = await stripe.checkout.sessions.create({
         payment_method_types: ["card", "alipay", "wechat_pay"],
@@ -78,7 +87,10 @@ export async function POST(req: Request) {
     const level = planLevelMap[planId];
 
     if (!priceId) {
-      return new NextResponse("Invalid Plan ID or Currency", { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid Plan ID or Currency" },
+        { status: 400 }
+      );
     }
 
     const checkoutSession = await stripe.checkout.sessions.create({
@@ -108,6 +120,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ url: checkoutSession.url });
   } catch (error) {
     console.error("[STRIPE_CHECKOUT]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Error" },
+      { status: 500 }
+    );
   }
 }
