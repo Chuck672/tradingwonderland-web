@@ -1,9 +1,8 @@
-```markdown
 # BBS 社区模块开发需求文档
 
 ## 项目背景
 
-我有一个已运行的交易教学网站，技术栈如下：
+基于现在我的交易教学网站TradingWonderLand，技术栈如下(请自行核对)：
 - **框架**: Next.js (App Router)
 - **认证**: NextAuth.js
 - **ORM**: Drizzle ORM

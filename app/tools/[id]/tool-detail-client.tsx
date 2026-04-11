@@ -2,7 +2,7 @@
 
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, PlayCircle } from "lucide-react";
+import { ArrowLeft, PlayCircle, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { motion } from "motion/react";
 
@@ -13,11 +13,11 @@ export default function ToolDetailClient({ toolId }: { toolId: string }) {
   const getToolTitle = () => {
     switch (toolId) {
       case "SVP5_pro": return t("tools.t1.title");
-      case "inRangeVolumeProfile": return t("tools.t2.title");
+      case "inRangeVP": return t("tools.t2.title");
       case "scalpTradingPanel": return t("tools.t3.title");
       case "strengthBubble_pro": return t("tools.t4.title");
       case "Trend_Panel9_pro": return t("tools.t5.title");
-      case "XAUUSD_monitor": return t("tools.t6.title");
+      case "microOrderFlow": return t("tools.t6.title");
       default: return toolId;
     }
   };
@@ -25,11 +25,11 @@ export default function ToolDetailClient({ toolId }: { toolId: string }) {
   const getToolDesc = () => {
     switch (toolId) {
       case "SVP5_pro": return t("tools.t1.desc");
-      case "inRangeVolumeProfile": return t("tools.t2.desc");
+      case "inRangeVP": return t("tools.t2.desc");
       case "scalpTradingPanel": return t("tools.t3.desc");
       case "strengthBubble_pro": return t("tools.t4.desc");
       case "Trend_Panel9_pro": return t("tools.t5.desc");
-      case "XAUUSD_monitor": return t("tools.t6.desc");
+      case "microOrderFlow": return t("tools.t6.desc");
       default: return "";
     }
   };
@@ -84,7 +84,29 @@ export default function ToolDetailClient({ toolId }: { toolId: string }) {
               allowFullScreen
             ></iframe>
           </div>
-        )  : (
+        ) : toolId === "strengthBubble_pro" ? (
+          <div className="w-full aspect-video bg-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden relative">
+            <iframe
+              className="absolute inset-0 w-full h-full"
+              src="https://www.youtube.com/embed/AnKs4JMvIpI"
+              title="Strength Bubble Pro"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            ></iframe>
+          </div>
+        ) : toolId === "inRangeVP" ? (
+          <div className="w-full aspect-video bg-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden relative">
+            <iframe
+              className="absolute inset-0 w-full h-full"
+              src="https://www.youtube.com/embed/aHOAwhE2xf8"
+              title="inRangeVP"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            ></iframe>
+          </div>
+        ) : (
           <div className="w-full aspect-video bg-[#0a0a0a] border border-white/10 rounded-2xl flex flex-col items-center justify-center text-gray-500 overflow-hidden relative group cursor-pointer hover:border-[#00ff88]/50 transition-colors">
             <PlayCircle className="w-16 h-16 mb-4 group-hover:text-[#00ff88] transition-colors" />
             <p className="text-lg">{t("tools.detail.video_tutorial")}</p>
@@ -271,11 +293,294 @@ export default function ToolDetailClient({ toolId }: { toolId: string }) {
               </Link>
             </div>
           </div>
+        ) : toolId === "strengthBubble_pro" ? (
+          <div className="prose prose-invert max-w-none pt-8 border-t border-white/10">
+            <h2 className="text-2xl">DeltaVolumeBubble — 量能气泡指标</h2>
+            <p className="text-lg text-gray-300">从订单流 Delta 中提炼的可视化工具，用「气泡大小 × 颜色」让你一眼读懂每根 K 线背后的多空真实博弈。</p>
+
+            <h3 className="text-xl mt-8">🎯 这个指标解决什么问题？</h3>
+            <p className="font-medium text-[#00ff88]">价格会骗人，但资金流向不会。</p>
+            <p>传统K线只告诉你"价格去了哪里"，却不告诉你"谁在推动价格"。<br/>
+            DeltaVolumeBubble 将订单流中的 Delta（主动买单 vs 主动卖单的净差值） 直接映射到每根K线上，用直观的气泡呈现：</p>
+            <ul className="list-none pl-0 space-y-2 mt-4">
+              <li className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-500 inline-block"></span> <strong>绿色气泡</strong> = 主动买盘胜出（多头在发力）</li>
+              <li className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-red-500 inline-block"></span> <strong>红色气泡</strong> = 主动卖盘胜出（空头在砸盘）</li>
+              <li className="flex items-center gap-2"><span className="w-3 h-3 rounded-full border-2 border-white/50 inline-block"></span> <strong>气泡越大</strong> = 多空搏杀越激烈，净胜出量越大</li>
+            </ul>
+            <p className="mt-4 italic text-gray-400">不再需要盯着密密麻麻的订单流数据表，一眼扫过去，资金在哪边，一目了然。</p>
+
+            <h3 className="text-xl mt-8">🧩 两大核心组件，化繁为简</h3>
+            <p>本指标摒弃了复杂冗余的显示，只保留两个最有决策价值的视觉组件：</p>
+
+            <h4 className="text-lg text-[#00ff88] mt-6">组件一：量能气泡（Volume Bubble）</h4>
+            <p>每根K线中央的气泡，是该K线内市价买单与市价卖单搏杀后的净胜出量可视化。</p>
+            <div className="overflow-x-auto mt-4">
+              <table className="min-w-full border-collapse border border-white/10 text-sm">
+                <thead>
+                  <tr className="bg-white/5">
+                    <th className="border border-white/10 px-4 py-2 text-left">应用场景</th>
+                    <th className="border border-white/10 px-4 py-2 text-left">你能看到什么</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-white/10 px-4 py-2 font-medium">单K多空力量识别</td>
+                    <td className="border border-white/10 px-4 py-2">绿色 = 买盘主导，红色 = 卖盘主导</td>
+                  </tr>
+                  <tr className="bg-white/5">
+                    <td className="border border-white/10 px-4 py-2 font-medium">量能衰减判断</td>
+                    <td className="border border-white/10 px-4 py-2">连续K线的气泡逐渐缩小 → 趋势动能正在枯竭</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-white/10 px-4 py-2 font-medium">努力 vs 结果识别</td>
+                    <td className="border border-white/10 px-4 py-2">大气泡 + 小实体K线 → 大资金进场但价格没动 → 潜在反转信号</td>
+                  </tr>
+                  <tr className="bg-white/5">
+                    <td className="border border-white/10 px-4 py-2 font-medium">真假突破辅助</td>
+                    <td className="border border-white/10 px-4 py-2">突破K线的气泡颜色与方向是否一致？阳K负Delta / 阴K正Delta → 警惕流动性猎杀</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h4 className="text-lg text-[#00ff88] mt-6">组件二：背离三角（Divergence Triangle）</h4>
+            <p>当出现 <strong>「阳K + 负Delta」</strong> 或 <strong>「阴K + 正Delta」</strong> 时，K线高低点旁会出现一个小三角标记。</p>
+            <blockquote className="border-l-4 border-[#00ff88] pl-4 py-2 bg-white/5 my-4 text-gray-300">
+              价格涨了，但其实是卖盘在主导；或者价格跌了，但其实是买盘在接货。——这就是量价背离，有一定概率为趋势即将反转的早期信号。
+            </blockquote>
+
+            <h3 className="text-xl mt-8">📐 适用场景</h3>
+            <div className="overflow-x-auto mt-4">
+              <table className="min-w-full border-collapse border border-white/10 text-sm">
+                <tbody>
+                  <tr>
+                    <td className="border border-white/10 px-4 py-3 font-medium min-w-[140px] text-[#00ff88]">左侧交易（逆势）</td>
+                    <td className="border border-white/10 px-4 py-3">在关键支撑/阻力位，观察气泡是否出现量能衰减 + 背离三角 → 辅助判断反转概率，不再盲目接飞刀</td>
+                  </tr>
+                  <tr className="bg-white/5">
+                    <td className="border border-white/10 px-4 py-3 font-medium text-[#00ff88]">右侧交易（顺势）</td>
+                    <td className="border border-white/10 px-4 py-3">突破发生时，观察突破K线的气泡颜色与大小 → 确认是真突破还是流动性获取后的假突破</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-white/10 px-4 py-3 font-medium text-[#00ff88]">价格行为交易</td>
+                    <td className="border border-white/10 px-4 py-3">作为裸K交易的额外确认层，在Pin Bar、吞没等形态出现时，用气泡验证背后是否有真实资金支撑</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-4 text-amber-400">💡 建议观察周期：15分钟 & 30分钟——在噪音与信息量之间取得最佳平衡。</p>
+
+            <h3 className="text-xl mt-8">⚙️ 核心参数一览</h3>
+            <div className="overflow-x-auto mt-4">
+              <table className="min-w-full border-collapse border border-white/10 text-sm">
+                <thead>
+                  <tr className="bg-white/5">
+                    <th className="border border-white/10 px-4 py-2 text-left">参数</th>
+                    <th className="border border-white/10 px-4 py-2 text-left">默认值</th>
+                    <th className="border border-white/10 px-4 py-2 text-left">作用</th>
+                    <th className="border border-white/10 px-4 py-2 text-left">调参建议</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-white/10 px-4 py-2 font-mono">MaxBars</td>
+                    <td className="border border-white/10 px-4 py-2">100</td>
+                    <td className="border border-white/10 px-4 py-2">最大回看K线数</td>
+                    <td className="border border-white/10 px-4 py-2 text-gray-400">剥头皮/日内100根足够；最大建议≤500，避免Tick计算过载</td>
+                  </tr>
+                  <tr className="bg-white/5">
+                    <td className="border border-white/10 px-4 py-2 font-mono">MinDeltaThreshold</td>
+                    <td className="border border-white/10 px-4 py-2">0</td>
+                    <td className="border border-white/10 px-4 py-2">气泡显示的最小Delta门槛</td>
+                    <td className="border border-white/10 px-4 py-2 text-gray-400">不喜欢满屏气泡？调到50-100过滤噪音</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-white/10 px-4 py-2 font-mono">DivDeltaMin</td>
+                    <td className="border border-white/10 px-4 py-2">10</td>
+                    <td className="border border-white/10 px-4 py-2">背离三角的最小Delta过滤</td>
+                    <td className="border border-white/10 px-4 py-2 text-gray-400">调到50+，只保留"主力级别"的量价背离</td>
+                  </tr>
+                  <tr className="bg-white/5">
+                    <td className="border border-white/10 px-4 py-2 font-mono">SizeMult</td>
+                    <td className="border border-white/10 px-4 py-2">2.5</td>
+                    <td className="border border-white/10 px-4 py-2">气泡大小倍数</td>
+                    <td className="border border-white/10 px-4 py-2 text-gray-400">4K屏可调大；小屏/密集K线调到1.5避免重叠</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-white/10 px-4 py-2 font-mono">Transparency</td>
+                    <td className="border border-white/10 px-4 py-2">120</td>
+                    <td className="border border-white/10 px-4 py-2">气泡透明度 (0-255)</td>
+                    <td className="border border-white/10 px-4 py-2 text-gray-400">调低 = 更透明，确保不遮挡K线本身</td>
+                  </tr>
+                  <tr className="bg-white/5">
+                    <td className="border border-white/10 px-4 py-2 font-mono">ShowDeltaValue</td>
+                    <td className="border border-white/10 px-4 py-2">True</td>
+                    <td className="border border-white/10 px-4 py-2">是否显示Delta数值</td>
+                    <td className="border border-white/10 px-4 py-2 text-gray-400">极简主义者设为False，纯靠颜色+大小直觉判断</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-white/10 px-4 py-2 font-mono">TriangleOffset</td>
+                    <td className="border border-white/10 px-4 py-2">-</td>
+                    <td className="border border-white/10 px-4 py-2">背离三角与K线的间距</td>
+                    <td className="border border-white/10 px-4 py-2 text-gray-400">觉得挤就调大</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 className="text-xl mt-8 text-rose-400 flex items-center gap-2"><AlertCircle className="w-5 h-5"/> ⚠️ 重要提醒</h3>
+            <p className="font-medium text-white">这不是一个"出信号就无脑入场"的指标。</p>
+            <p>不要看到单独一根K线出现大气泡就直接下单。它的价值在于——结合价格行为、市场结构、关键位置，为你的交易决策提供订单流维度的额外确认。</p>
+            <p className="text-gray-400">建议不要与其他高计算量指标/EA共用同一图表窗口，以保证运行流畅。</p>
+
+            <div className="mt-8 p-6 bg-white/5 border border-white/10 rounded-xl">
+              <h3 className="text-xl font-bold text-[#00ff88] mb-2">总结</h3>
+              <p className="text-lg">K线告诉你价格去了哪里，量能气泡告诉你——是谁在推。</p>
+              <p className="mt-4 text-sm text-gray-400">本指标最佳运行场景为0点差账户或者固定点差账户， 即不会在新闻时段扩大点差的经纪商账户，推荐使用exness零点差账户。</p>
+            </div>
+
+            <div className="mt-10 flex gap-4">
+              <Link href="/dashboard">
+                <Button className="bg-[#00ff88] text-black hover:bg-[#00cc6a] px-8">
+                  前往个人中心下载
+                </Button>
+              </Link>
+            </div>
+          </div>
         ) : (
           <div className="prose prose-invert max-w-none pt-8 border-t border-white/10">
-            <p className="text-gray-300 leading-relaxed text-lg">
-              {t("tools.detail.placeholder_desc")}
-            </p>
+            <h2 className="text-2xl">InRange Volume Profile — 自由定义分析区间的成交结构工具</h2>
+            
+            <h3 className="text-xl mt-8 text-[#00ff88]">一句话介绍</h3>
+            <p className="text-lg font-medium text-white">框出你想看的任意区间，即时呈现成交结构。</p>
+            <p>InRange Volume Profile 让你摆脱固定 Session 的限制，在任意时间范围内计算并绘制 Volume Profile，精准捕捉局部成交结构中的交易机会。</p>
+
+            <h3 className="text-xl mt-8">为什么需要 InRange VP？</h3>
+            <h4 className="text-lg text-[#00ff88] mt-6">比 Session VP 更灵活</h4>
+            <p>Session Volume Profile 的计算区间是固定的——亚盘、欧盘、美盘，起点和终点预先定义，无法调整。<br/>
+            InRange VP 的区间完全由你决定：</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>只看一个 Session 中的一小段行情</li>
+              <li>将两个 Session 合并观察</li>
+              <li>单独框出一段回撤结构</li>
+              <li>只分析一段横盘震荡区间</li>
+            </ul>
+            <p className="italic text-gray-400 mt-2">不是让市场适配你的固定模板，而是你根据市场结构，自由定义分析区间。</p>
+
+            <h4 className="text-lg text-[#00ff88] mt-6">覆盖更多交易场景</h4>
+            <p>Session VP 擅长中大周期结构判断——识别价格迁移、震荡、流动性获取阶段。但现实市场中，真正流畅的趋势迁移并不多，回撤、盘整、微结构震荡往往占据一周的大半时间。<br/>
+            InRange VP 专为这些"非标准趋势迁移"阶段设计，适合在 <strong>1 分钟、5 分钟</strong> 小周期上，观察局部价格区间内的成交结构。</p>
+
+            <div className="overflow-x-auto mt-6">
+              <table className="min-w-full border-collapse border border-white/10 text-sm">
+                <thead>
+                  <tr className="bg-white/5">
+                    <th className="border border-white/10 px-4 py-2 text-left w-1/4">对比维度</th>
+                    <th className="border border-white/10 px-4 py-2 text-left">Session VP</th>
+                    <th className="border border-white/10 px-4 py-2 text-left text-[#00ff88]">InRange VP</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-white/10 px-4 py-2 font-medium">区间</td>
+                    <td className="border border-white/10 px-4 py-2">固定（按 Session 划分）</td>
+                    <td className="border border-white/10 px-4 py-2 font-medium text-[#00ff88]">自由拖拽、动态定义</td>
+                  </tr>
+                  <tr className="bg-white/5">
+                    <td className="border border-white/10 px-4 py-2 font-medium">适用周期</td>
+                    <td className="border border-white/10 px-4 py-2">15 分钟、30 分钟及以上</td>
+                    <td className="border border-white/10 px-4 py-2 font-medium text-[#00ff88]">1 分钟、5 分钟</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-white/10 px-4 py-2 font-medium">核心用途</td>
+                    <td className="border border-white/10 px-4 py-2">大结构过滤与阶段判断</td>
+                    <td className="border border-white/10 px-4 py-2 font-medium text-[#00ff88]">小结构执行与精确入场</td>
+                  </tr>
+                  <tr className="bg-white/5">
+                    <td className="border border-white/10 px-4 py-2 font-medium">交易风格</td>
+                    <td className="border border-white/10 px-4 py-2">趋势跟踪、波段</td>
+                    <td className="border border-white/10 px-4 py-2 font-medium text-[#00ff88]">日内交易、剥头皮</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 className="text-xl mt-8 text-[#00ff88]">操作方式</h3>
+            <p>三步完成：</p>
+            <ol className="list-decimal pl-5 space-y-2">
+              <li>将指标加载到图表，自动生成两条垂直线</li>
+              <li>拖动两条线，框出你想分析的时间范围</li>
+              <li>指标自动在该区间内计算并绘制 Volume Profile</li>
+            </ol>
+            <p className="font-medium mt-2">想看哪里，就框哪里。</p>
+
+            <h3 className="text-xl mt-8">⚙️ 核心参数</h3>
+            <div className="overflow-x-auto mt-4">
+              <table className="min-w-full border-collapse border border-white/10 text-sm">
+                <thead>
+                  <tr className="bg-white/5">
+                    <th className="border border-white/10 px-4 py-2 text-left">参数</th>
+                    <th className="border border-white/10 px-4 py-2 text-left">说明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-white/10 px-4 py-2 font-mono">Calculation Timeframe</td>
+                    <td className="border border-white/10 px-4 py-2">计算用的时间框架。当前图表为 1 分钟时，可指定用 5 分钟数据计算，获得更稳定的结构</td>
+                  </tr>
+                  <tr className="bg-white/5">
+                    <td className="border border-white/10 px-4 py-2 font-mono">Precision</td>
+                    <td className="border border-white/10 px-4 py-2">价格分层精度，数值越高结构越细腻，默认 200 即可满足大多数场景</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-white/10 px-4 py-2 font-mono">Applied Volume</td>
+                    <td className="border border-white/10 px-4 py-2">选择 Tick Volume 或 Real Volume。有真实成交量数据的品种优先使用 Real Volume</td>
+                  </tr>
+                  <tr className="bg-white/5">
+                    <td className="border border-white/10 px-4 py-2 font-mono">颜色与透明度</td>
+                    <td className="border border-white/10 px-4 py-2">可分别自定义 Volume Bar、POC、HVN、LVN、起止线的颜色，以及整体透明度，避免遮挡 K 线</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 className="text-xl mt-8">📐 典型应用场景</h3>
+            <h4 className="text-lg text-[#00ff88] mt-4">场景一：趋势内回调的左侧入场</h4>
+            <p>趋势确认后，如果迁移初段未能进场且大周期目标位尚未到达，在价格回撤时框出回调区间，通过 POC 与 HVN 分布寻找左侧交易点。</p>
+            
+            <h4 className="text-lg text-[#00ff88] mt-4">场景二：小周期共识区与 POC 切换</h4>
+            <p>在 1 分钟或 5 分钟图上，框出一段短期横盘区间，观察 POC 位置的迁移，判断多空共识是否正在发生转换。</p>
+            
+            <h4 className="text-lg text-[#00ff88] mt-4">场景三：区间内 POC 回归与反转</h4>
+            <p>框出一段完整的价格波动区间，观察价格是否回归至 POC 并在该位置产生反转信号，作为执行依据。</p>
+
+            <h3 className="text-xl mt-8">💡 使用建议</h3>
+            <ol className="list-decimal pl-5 space-y-4">
+              <li>
+                <strong>不要孤立看 POC</strong><br/>
+                <span className="text-gray-400">POC 是重要参考，但必须结合 HVN 分布、LVN 空洞、价格相对区间位置以及到价后的实际反应，综合判断。Volume Profile 不是"到价就做"的机械信号，而是帮你理解成交结构的地图。</span>
+              </li>
+              <li>
+                <strong>区间选择要有结构逻辑</strong><br/>
+                <span className="text-gray-400">灵活是优势，也是风险。不同区间可能呈现完全不同的结构。应围绕有逻辑的结构来定义区间：一段完整推动、一段完整回撤、一段明确震荡、一次突破前后的整理。避免随意截取无结构的行情。</span>
+              </li>
+              <li>
+                <strong>小周期必须结合大周期上下文</strong><br/>
+                <span className="text-gray-400">小周期结构极易被大周期背景覆盖。最理想的用法：<strong>大周期定方向和环境 → InRange VP 找局部执行位</strong>。留意上方是否贴近高周期阻力、当前是否处于 Session 高低点附近、是否临近重要新闻、是否处在大级别流动性区间内。</span>
+              </li>
+            </ol>
+
+            <div className="mt-8 p-6 bg-white/5 border border-white/10 rounded-xl">
+              <h3 className="text-xl font-bold text-[#00ff88] mb-4">总结</h3>
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2"><span>想在非趋势阶段依然找到交易机会</span> <span className="text-gray-500 mx-2">→</span> <span className="text-[#00ff88]">✅ 局部成交结构分析</span></li>
+                <li className="flex items-center gap-2"><span>想自由选择分析区间而非被 Session 限制</span> <span className="text-gray-500 mx-2">→</span> <span className="text-[#00ff88]">✅ 动态区间、自由拖拽</span></li>
+                <li className="flex items-center gap-2"><span>做日内或剥头皮，需要小周期精确执行</span> <span className="text-gray-500 mx-2">→</span> <span className="text-[#00ff88]">✅ 支持 1 分钟级别精细分析</span></li>
+                <li className="flex items-center gap-2"><span>需要一个轻量、直观、即开即用的工具</span> <span className="text-gray-500 mx-2">→</span> <span className="text-[#00ff88]">✅ 加载即用，拖线即算</span></li>
+              </ul>
+              <p className="mt-6 text-lg font-medium text-white text-center">InRange Volume Profile——让你在任意市场结构中，看见成交的真相。</p>
+            </div>
+
             <div className="mt-10 flex gap-4">
               <Link href="/dashboard">
                 <Button className="bg-[#00ff88] text-black hover:bg-[#00cc6a] px-8">

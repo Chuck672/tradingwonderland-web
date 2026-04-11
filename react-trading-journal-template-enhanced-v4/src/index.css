@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+/* Smooth dark appearance and subtle motion for hierarchy. */
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: #050a08;
+  color: #e2e8f0;
+  font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* TipTap (rich text) */
+.rt-shell {
+  border-radius: 0px;
+}
+
+.rt-btn {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 8px;
+  line-height: 1;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.rt-btn:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.rt-btn-active {
+  border-color: rgba(52, 211, 153, 0.6);
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.rt-editor {
+  padding: 10px 12px;
+  outline: none;
+  color: #e2e8f0;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.rt-editor p {
+  margin: 0.35rem 0;
+}
+
+.rt-editor ul,
+.rt-editor ol {
+  padding-left: 1.25rem;
+  margin: 0.4rem 0;
+}
+
+.rt-editor h1,
+.rt-editor h2,
+.rt-editor h3 {
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0.65rem 0 0.25rem;
+}
+
+.rt-editor h1 {
+  font-size: 1.1rem;
+}
+.rt-editor h2 {
+  font-size: 1.05rem;
+}
+.rt-editor h3 {
+  font-size: 1rem;
+}
+
+.rt-editor blockquote {
+  border-left: 3px solid rgba(52, 211, 153, 0.45);
+  padding-left: 0.75rem;
+  color: rgba(226, 232, 240, 0.9);
+  margin: 0.55rem 0;
+}
+
+.rt-editor .rt-image,
+.rt-editor img {
+  max-width: 100%;
+  /* 编辑体验：限制高度，避免图片过大挤压文字编辑区域 */
+  max-height: 220px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  margin: 0.5rem 0;
+  cursor: zoom-in;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: rgba(148, 163, 184, 0.75);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.55s ease-out;
+}

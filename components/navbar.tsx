@@ -52,6 +52,9 @@ export function Navbar() {
               <Link href="/tools" className={getLinkClass("/tools")}>
                 {t("nav.tools")}
               </Link>
+              <Link href="/bbs" className={getLinkClass("/bbs")}>
+                {t("nav.community")}
+              </Link>
               <Link href="/subscribe" className={getLinkClass("/subscribe")}>
                 {t("nav.subscribe")}
               </Link>
@@ -128,6 +131,13 @@ export function Navbar() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {t("nav.tools")}
+            </Link>
+            <Link 
+              href="/bbs" 
+              className={getMobileLinkClass("/bbs")}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              {t("nav.community")}
             </Link>
             <Link 
               href="/subscribe" 

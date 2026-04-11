@@ -46,3 +46,22 @@ volumeprofile_courses/.env*
 priceactiontradingmanual/node_modules/
 priceactiontradingmanual/dist/
 priceactiontradingmanual/.env*
+
+tradingsystemv2p0/node_modules/
+tradingsystemv2p0/dist/
+tradingsystemv2p0/.env*
+
+# Private Tools Storage
+private-tools/*
+!private-tools/.gitkeep
+
+# Docs and non-website files
+*.md
+*.MD
+!README.md
+react-trading-journal-template-enhanced-v4/node_modules/
+react-trading-journal-template-enhanced-v4/dist/
+pretrade-checklist-template-v6/node_modules/
+pretrade-checklist-template-v6/dist/
+scripts/
+wechat.jpg

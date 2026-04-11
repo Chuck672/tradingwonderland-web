@@ -7,9 +7,11 @@ import {
   datetime,
   primaryKey,
   uniqueIndex,
+  boolean,
 } from "drizzle-orm/mysql-core";
 import { relations, sql } from "drizzle-orm";
 import { type AdapterAccount } from "@auth/core/adapters";
+import { bbsUserProfiles, bbsPosts, bbsReplies, bbsCheckins, bbsLikes, bbsBookmarks } from "./schema/bbs";
 
 export const users = mysqlTable("user", {
   id: varchar("id", { length: 255 })
@@ -74,28 +76,34 @@ export const verificationTokens = mysqlTable(
   })
 );
 
-export const mt5Accounts = mysqlTable(
-  "mt5_account",
-  {
-    id: varchar("id", { length: 255 })
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    userId: varchar("userId", { length: 255 })
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    accountId: varchar("accountId", { length: 255 }).notNull(),
-    createdAt: datetime("createdAt").default(sql`CURRENT_TIMESTAMP`),
-  },
-  (account) => ({
-    userAccountIdx: uniqueIndex("userId_accountId_idx").on(account.userId, account.accountId),
-  })
-);
+export const activationCodes = mysqlTable("activation_codes", {
+  id: varchar("id", { length: 255 })
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  code: varchar("code", { length: 50 }).unique().notNull(),
+  durationDays: int("durationDays").default(1095).notNull(),
+  membershipLevel: int("membershipLevel").default(1).notNull(),
+  isUsed: boolean("isUsed").default(false),
+  usedByEmail: varchar("usedByEmail", { length: 255 }),
+  usedById: varchar("usedById", { length: 255 }).references(() => users.id, { onDelete: "set null" }),
+  usedAt: datetime("usedAt"),
+  createdAt: datetime("createdAt").default(sql`CURRENT_TIMESTAMP`),
+});
 
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   accounts: many(accounts),
   sessions: many(sessions),
-  mt5Accounts: many(mt5Accounts),
+  bbsUserProfile: one(bbsUserProfiles, {
+    fields: [users.id],
+    references: [bbsUserProfiles.userId],
+  }),
+  bbsPosts: many(bbsPosts),
+  bbsReplies: many(bbsReplies),
+  bbsCheckins: many(bbsCheckins),
+  bbsLikes: many(bbsLikes),
+  bbsBookmarks: many(bbsBookmarks),
+  activationCodes: many(activationCodes),
 }));
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -112,9 +120,4 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
   }),
 }));
 
-export const mt5AccountsRelations = relations(mt5Accounts, ({ one }) => ({
-  user: one(users, {
-    fields: [mt5Accounts.userId],
-    references: [users.id],
-  }),
-}));
+export * from "./schema/bbs";

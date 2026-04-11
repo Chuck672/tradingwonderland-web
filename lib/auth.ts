@@ -61,11 +61,28 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
+      // 首次登录时
       if (user) {
         token.id = user.id;
         token.membershipLevel = user.membershipLevel || 0;
         token.vipUntil = user.vipUntil || null;
       }
+      
+      // 每次访问 session 时，从数据库拉取最新状态，防止数据库手动修改后本地缓存不同步
+      if (token.id) {
+        const dbUser = await db.query.users.findFirst({
+          where: eq(users.id, token.id as string),
+          columns: {
+            membershipLevel: true,
+            vipUntil: true,
+          }
+        });
+        if (dbUser) {
+          token.membershipLevel = dbUser.membershipLevel || 0;
+          token.vipUntil = dbUser.vipUntil || null;
+        }
+      }
+      
       return token;
     },
     async session({ session, token }) {

@@ -7,15 +7,15 @@ import { motion } from "motion/react";
 import Link from "next/link";
 
 export default function ToolsPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const tools = [
     { id: "SVP5_pro", title: t("tools.t1.title"), desc: t("tools.t1.desc") },
-    { id: "inRangeVolumeProfile", title: t("tools.t2.title"), desc: t("tools.t2.desc") },
+    { id: "inRangeVP", title: t("tools.t2.title"), desc: t("tools.t2.desc") },
     { id: "scalpTradingPanel", title: t("tools.t3.title"), desc: t("tools.t3.desc") },
     { id: "strengthBubble_pro", title: t("tools.t4.title"), desc: t("tools.t4.desc") },
     { id: "Trend_Panel9_pro", title: t("tools.t5.title"), desc: t("tools.t5.desc") },
-    { id: "XAUUSD_monitor", title: t("tools.t6.title"), desc: t("tools.t6.desc") },
+    { id: "microOrderFlow", title: t("tools.t6.title"), desc: t("tools.t6.desc") },
   ];
 
   return (
@@ -51,6 +51,15 @@ export default function ToolsPage() {
             </motion.div>
           ))}
         </div>
+      </section>
+
+      {/* Disclaimer Section */}
+      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 mb-10 text-center">
+        <p className="text-gray-500 text-sm border-t border-white/10 pt-8 max-w-3xl mx-auto">
+          {language === "zh" ? 
+            "本工具仅供学习研究、历史回测与交易教育学习使用，不构成任何投资建议、交易信号或盈利保证。使用前请自行承担全部交易风险。" : 
+            "These tools are for learning, historical backtesting, and educational purposes only. They do not constitute any investment advice, trading signals, or guarantee of profitability. Please bear all trading risks independently before use."}
+        </p>
       </section>
     </div>
   );

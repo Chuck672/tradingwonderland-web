@@ -24,5 +24,12 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "priceaction_courses", "volumeprofile_courses", "priceactiontradingmanual"]
+  "exclude": [
+    "node_modules", 
+    "priceaction_courses", 
+    "volumeprofile_courses", 
+    "priceactiontradingmanual",
+    "pretrade-checklist-template-v6",
+    "react-trading-journal-template-enhanced-v4"
+  ]
 }

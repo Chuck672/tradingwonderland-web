@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "交易工具库 - 独家MT5高级指标与AI量化EA | 绿洲交易社区",
-  description: "探索绿洲交易社区的专业工具库。包含Session Volume Profile、流动性猎杀指标、订单块识别EA以及AI自动交易机器人。赋能您的MT5交易终端。",
-  keywords: ["交易工具", "MT5指标", "AI量化工具", "自动交易EA", "订单流工具", "Trading Tools", "MT5 Indicators", "Quantitative Trading"],
+  title: "量化工具库 - 独家时间序列分析与数据建模工具 | 量化逻辑实验室",
+  description: "探索量化逻辑实验室的专业工具库。包含高级数据可视化指标、算法逻辑分析插件与自动化回测模型，专注为数据科学家与量化研究员赋能。",
+  keywords: ["量化工具", "数据建模", "算法逻辑", "回测模型", "数据可视化", "Quantitative Tools", "Data Modeling", "Algorithmic Logic", "Tick Data Visualization"],
 };
 
 export default function ToolsLayout({

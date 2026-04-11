@@ -7,20 +7,20 @@ import { AuthProvider } from '@/components/auth-provider';
 
 export const metadata: Metadata = {
   title: {
-    default: '绿洲交易社区 (Trading WonderLand) - 专业外汇交易课程与AI量化工具',
-    template: '%s | 绿洲交易社区 (Trading WonderLand)',
+    default: '量化逻辑实验室 (QuantLogicLab) - 专注量化数据分析与 MQL5 编程教学',
+    template: '%s | 量化逻辑实验室 (QuantLogicLab)',
   },
-  description: '绿洲交易社区 (Trading WonderLand) 提供专业外汇交易学习课程、MT5交易高级指标、AI量化工具、订单流分析与策略库。帮助交易者建立完善的交易系统，用数据驱动每一次决策。',
-  keywords: ['绿洲交易社区', 'Trading WonderLand', '交易学习', '外汇交易课程', '交易工具', '交易高级指标', 'AI量化工具', '订单流', 'Trading Learning', 'Forex Trading Course', 'Trading Tools', 'Order Flow', 'Quantitative Trading'],
+  description: '量化逻辑实验室 (QuantLogicLab) 提供时间序列数据建模、MQL5 编程教学、原始 Tick 数据可视化工具与量化分析策略库。专注于金融数据工程与算法逻辑开发，不提供投资建议。',
+  keywords: ['QuantLogicLab', '量化逻辑实验室', '数据建模', 'MQL5编程', '时间序列分析', '算法逻辑', 'Quantitative Analysis', 'Data Modeling', 'Algorithmic Logic', 'Tick Data Visualization'],
   alternates: {
-    canonical: "https://tradingwonderland.com",
+    canonical: "https://quantlogiclab.com",
     languages: {
-      "zh-CN": "https://tradingwonderland.com/",
-      "zh-HK": "https://tradingwonderland.com/",
-      "zh-TW": "https://tradingwonderland.com/",
-      "zh-Hant": "https://tradingwonderland.com/",
-      "en": "https://tradingwonderland.com/",
-      "x-default": "https://tradingwonderland.com/"
+      "zh-CN": "https://quantlogiclab.com/",
+      "zh-HK": "https://quantlogiclab.com/",
+      "zh-TW": "https://quantlogiclab.com/",
+      "zh-Hant": "https://quantlogiclab.com/",
+      "en": "https://quantlogiclab.com/",
+      "x-default": "https://quantlogiclab.com/"
     }
   },
   icons: {
@@ -32,11 +32,11 @@ export const metadata: Metadata = {
     shortcut: '/favicon.png',
   },
   openGraph: {
-    title: '绿洲交易社区 (Trading WonderLand)',
-    description: '提供专业外汇交易学习课程、MT5交易高级指标、AI量化工具、订单流分析与策略库。',
+    title: '量化逻辑实验室 (QuantLogicLab)',
+    description: '提供时间序列数据建模、MQL5 编程教学、原始 Tick 数据可视化工具与量化分析策略库。',
     type: 'website',
     locale: 'zh_CN',
-    siteName: '绿洲交易社区 (Trading WonderLand)',
+    siteName: '量化逻辑实验室 (QuantLogicLab)',
   },
 };
 
@@ -50,15 +50,15 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebSite",
-              "name": "绿洲交易社区",
-              "alternateName": "Trading WonderLand",
-              "url": "https://tradingwonderland.com/",
+              "name": "量化逻辑实验室",
+              "alternateName": "QuantLogicLab",
+              "url": "https://quantlogiclab.com/",
               "publisher": {
                 "@type": "Organization",
-                "name": "绿洲交易社区 (Trading WonderLand)",
+                "name": "量化逻辑实验室 (QuantLogicLab)",
                 "logo": {
                   "@type": "ImageObject",
-                  "url": "https://tradingwonderland.com/favicon.png"
+                  "url": "https://quantlogiclab.com/favicon.png"
                 }
               }
             })
@@ -70,12 +70,12 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              "name": "绿洲交易社区 (Trading WonderLand)",
-              "url": "https://tradingwonderland.com/",
-              "logo": "https://tradingwonderland.com/favicon.png",
+              "name": "量化逻辑实验室 (QuantLogicLab)",
+              "url": "https://quantlogiclab.com/",
+              "logo": "https://quantlogiclab.com/favicon.png",
               "sameAs": [
-                "https://www.youtube.com/@tradingwonderland",
-                "https://twitter.com/tradingwonderland"
+                "https://www.youtube.com/@quantlogiclab",
+                "https://twitter.com/quantlogiclab"
               ]
             })
           }}

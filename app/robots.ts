@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/api/*"],
     },
-    sitemap: "https://tradingwonderland.com/sitemap.xml",
-    host: "https://tradingwonderland.com",
+    sitemap: "https://quantlogiclab.com/sitemap.xml",
+    host: "https://quantlogiclab.com",
   };
 }

@@ -1,0 +1,1 @@
+DROP TABLE `mt5_account`;

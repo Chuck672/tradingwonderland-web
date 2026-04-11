@@ -13,7 +13,10 @@ export default function ResourcesPage() {
     { title: t("courses.c1.title"), desc: t("courses.c1.desc"), href: "/resources/psychology" },
     { title: t("courses.c2.title"), desc: t("courses.c2.desc"), href: "/priceaction_course.html" },
     { title: t("courses.c3.title"), desc: t("courses.c3.desc"), href: "/volumeprofile_course.html" },
-    { title: "价格行为交易手册", desc: "深度解读K线和理解交易逻辑", href: "/priceaction_manual.html" },
+    { title: t("courses.c4.title"), desc: t("courses.c4.desc"), href: "/priceaction_manual.html" },
+    { title: t("courses.c5.title"), desc: t("courses.c5.desc"), href: "/tradingsystemv2p0.html" },
+    { title: t("courses.c6.title"), desc: t("courses.c6.desc"), href: "/trading-journal.html" },
+    { title: t("courses.c7.title"), desc: t("courses.c7.desc"), href: "/pretrade-checklist.html" },
   ];
 
   const strategies = [
@@ -107,25 +110,34 @@ export default function ResourcesPage() {
           <h2 className="text-4xl font-bold text-[#00ff88] mb-4">{t("lesson.title")}</h2>
           <div className="h-px w-full bg-white/20 max-w-4xl mx-auto"></div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <Card className="rounded-tl-none rounded-tr-[60px] rounded-bl-[60px] rounded-br-none h-full flex flex-col">
-              <CardHeader className="flex-grow">
-                <CardTitle className="text-xl">{t("lesson.c1.title")}</CardTitle>
-                <CardDescription className="mt-2">{t("lesson.c1.desc")}</CardDescription>
+            <Card className="rounded-tl-none rounded-tr-[40px] rounded-bl-[40px] rounded-br-none h-full flex flex-col min-h-[160px]">
+              <CardHeader className="flex-grow pt-6 pb-2">
+                <CardTitle className="text-lg leading-tight">{t("lesson.c1.title")}</CardTitle>
+                {t("lesson.c1.desc") && <CardDescription className="mt-2">{t("lesson.c1.desc")}</CardDescription>}
               </CardHeader>
               <CardFooter className="justify-center mt-auto pb-6">
-                <Button variant="outline" className="border-[#00ff88] text-[#00ff88] hover:bg-[#00ff88] hover:text-black w-full">
-                  {t("btn.read_article")}
-                </Button>
+                <Link href="/resources/lesson-1" className="w-full">
+                  <Button variant="outline" className="border-[#00ff88] text-[#00ff88] hover:bg-[#00ff88] hover:text-black w-full">
+                    {t("btn.read_article")}
+                  </Button>
+                </Link>
               </CardFooter>
             </Card>
           </motion.div>
         </div>
+      </section>
+
+      {/* Disclaimer Section */}
+      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 mb-10 text-center">
+        <p className="text-gray-500 text-sm border-t border-white/10 pt-8 max-w-3xl mx-auto">
+          {t("resources.disclaimer")}
+        </p>
       </section>
     </div>
   );
