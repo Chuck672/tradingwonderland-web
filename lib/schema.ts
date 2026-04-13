@@ -11,7 +11,8 @@ import {
 } from "drizzle-orm/mysql-core";
 import { relations, sql } from "drizzle-orm";
 import { type AdapterAccount } from "@auth/core/adapters";
-import { bbsUserProfiles, bbsPosts, bbsReplies, bbsCheckins, bbsLikes, bbsBookmarks } from "./schema/bbs";
+import { bbsUserProfiles, bbsCategories, bbsPosts, bbsReplies, bbsCheckins, bbsLikes, bbsBookmarks } from "./schema/bbs";
+export { bbsUserProfiles, bbsCategories, bbsPosts, bbsReplies, bbsCheckins, bbsLikes, bbsBookmarks };
 
 export const users = mysqlTable("user", {
   id: varchar("id", { length: 255 })
