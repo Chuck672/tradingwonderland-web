@@ -104,7 +104,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   bbsCheckins: many(bbsCheckins),
   bbsLikes: many(bbsLikes),
   bbsBookmarks: many(bbsBookmarks),
-  activationCodes: many(activationCodes),
+  usedActivationCodes: many(activationCodes, { relationName: "usedActivationCodes" }),
 }));
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -118,6 +118,14 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
   user: one(users, {
     fields: [sessions.userId],
     references: [users.id],
+  }),
+}));
+
+export const activationCodesRelations = relations(activationCodes, ({ one }) => ({
+  usedBy: one(users, {
+    fields: [activationCodes.usedById],
+    references: [users.id],
+    relationName: "usedActivationCodes",
   }),
 }));
 
