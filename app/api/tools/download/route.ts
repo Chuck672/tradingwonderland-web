@@ -58,11 +58,29 @@ export async function GET(req: NextRequest) {
     }
 
     // 5. 读取私有文件
-    // process.cwd() 指向项目根目录，这里定位到我们刚才创建的 private-tools 文件夹
-    const filePath = path.join(process.cwd(), "private-tools", toolConfig.filename);
+    // process.cwd() 在某些部署环境可能发生偏移，改用 __dirname 向上追溯，或者直接用 process.env.PWD 结合兜底
+    const basePath = process.env.PWD || process.cwd();
+    const filePath = path.join(basePath, "private-tools", toolConfig.filename);
+
+    console.log(`[API_DOWNLOAD] Attempting to read file from: ${filePath}`);
 
     if (!existsSync(filePath)) {
       console.error(`[API_DOWNLOAD] File not found: ${filePath}`);
+      // Try alternative path mapping just in case of Next.js server standalone output structure
+      const altPath = path.join(process.cwd(), ".next", "standalone", "private-tools", toolConfig.filename);
+      if (existsSync(altPath)) {
+        console.log(`[API_DOWNLOAD] File found at alternative path: ${altPath}`);
+        const altFileBuffer = await readFile(altPath);
+        return new NextResponse(altFileBuffer, {
+          headers: {
+            "Content-Type": "application/octet-stream",
+            "Content-Disposition": `attachment; filename="${toolConfig.filename}"`,
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Length": altFileBuffer.length.toString(),
+          },
+        });
+      }
+
       return NextResponse.json({ success: false, message: "工具文件正在更新中，请稍后再试" }, { status: 404 });
     }
 
