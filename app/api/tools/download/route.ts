@@ -74,6 +74,7 @@ export async function GET(req: NextRequest) {
         "Content-Type": "application/octet-stream",
         "Content-Disposition": `attachment; filename="${toolConfig.filename}"`,
         "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Content-Length": fileBuffer.length.toString(),
       },
     });
 
