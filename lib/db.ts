@@ -17,4 +17,4 @@ const connection = globalForDb.conn ?? mysql.createPool({
 
 if (process.env.NODE_ENV !== "production") globalForDb.conn = connection;
 
-export const db = drizzle(connection, { schema, mode: "default" });
+export const db = drizzle(connection, { schema, mode: "planetscale" });
