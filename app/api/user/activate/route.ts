@@ -22,8 +22,8 @@ export async function POST(req: NextRequest) {
     // Format the code
     code = code.trim().toUpperCase();
 
-    // Basic regex validation
-    if (!/^TWL-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(code)) {
+    // Basic regex validation (allow PRO-, ULTRA-, or TWL- prefix)
+    if (!/^(PRO|ULTRA|TWL)-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(code)) {
       return NextResponse.json({ success: false, message: "激活码格式不正确" }, { status: 400 });
     }
 
