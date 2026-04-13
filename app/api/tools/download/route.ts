@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
 
     if (!existsSync(filePath)) {
       console.error(`[API_DOWNLOAD] File not found: ${filePath}`);
-      // Try alternative path mapping just in case of Next.js server standalone output structure
+      // Fallback 1: Try alternative path mapping just in case of Next.js server standalone output structure
       const altPath = path.join(process.cwd(), ".next", "standalone", "private-tools", toolConfig.filename);
       if (existsSync(altPath)) {
         console.log(`[API_DOWNLOAD] File found at alternative path: ${altPath}`);
@@ -77,6 +77,22 @@ export async function GET(req: NextRequest) {
             "Content-Disposition": `attachment; filename="${toolConfig.filename}"`,
             "Cache-Control": "no-cache, no-store, must-revalidate",
             "Content-Length": altFileBuffer.length.toString(),
+          },
+        });
+      }
+
+      // Fallback 2: Check if process.cwd() is inside public_html or nodejs and search relative to it
+      // Hostinger often puts files one directory up or in specific web roots
+      const fallbackPath3 = path.join(process.cwd(), "..", "private-tools", toolConfig.filename);
+      if (existsSync(fallbackPath3)) {
+        console.log(`[API_DOWNLOAD] File found at fallback path 3 (..): ${fallbackPath3}`);
+        const fallbackBuffer3 = await readFile(fallbackPath3);
+        return new NextResponse(fallbackBuffer3, {
+          headers: {
+            "Content-Type": "application/octet-stream",
+            "Content-Disposition": `attachment; filename="${toolConfig.filename}"`,
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Length": fallbackBuffer3.length.toString(),
           },
         });
       }
