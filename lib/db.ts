@@ -10,9 +10,11 @@ const connectionString = process.env.DATABASE_URL?.split('?')[0];
 
 const connection = globalForDb.conn ?? mysql.createPool({
   uri: connectionString,
-  connectionLimit: 5,
+  connectionLimit: 15, // 适当增加连接池大小，以处理更高的并发
   waitForConnections: true,
-  queueLimit: 0
+  queueLimit: 0,
+  enableKeepAlive: true, // 保持长连接，避免频繁创建和销毁连接带来的开销
+  keepAliveInitialDelay: 10000,
 });
 
 if (process.env.NODE_ENV !== "production") globalForDb.conn = connection;

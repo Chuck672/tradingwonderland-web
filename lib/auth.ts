@@ -60,16 +60,21 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       // 首次登录时
       if (user) {
         token.id = user.id;
         token.membershipLevel = user.membershipLevel || 0;
         token.vipUntil = user.vipUntil || null;
+        token.lastChecked = Date.now();
       }
       
-      // 每次访问 session 时，从数据库拉取最新状态，防止数据库手动修改后本地缓存不同步
-      if (token.id) {
+      // 只有在主动触发 update，或者距离上次查库超过 5 分钟 (300000ms) 时，才去数据库重新查询
+      // 这能极大地减少每个页面/组件渲染时 /api/auth/session 发起的并发查库请求
+      const now = Date.now();
+      const shouldUpdate = trigger === "update" || !token.lastChecked || (now - (token.lastChecked as number)) > 300000;
+
+      if (token.id && shouldUpdate) {
         const dbUser = await db.query.users.findFirst({
           where: eq(users.id, token.id as string),
           columns: {
@@ -80,6 +85,7 @@ export const authOptions: NextAuthOptions = {
         if (dbUser) {
           token.membershipLevel = dbUser.membershipLevel || 0;
           token.vipUntil = dbUser.vipUntil || null;
+          token.lastChecked = now; // 更新检查时间
         }
       }
       
