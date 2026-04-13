@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { bbsPosts, bbsReplies, bbsUserProfiles } from "@/lib/schema/bbs";
 import { getUserBBSRole, getPermissions, ensureBBSProfile } from "@/lib/bbs/permissions";
 import { successResponse, errorResponse } from "@/lib/bbs/utils";
-import { eq, and, desc, asc, sql } from "drizzle-orm";
+import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
 
 export async function GET(
   req: NextRequest,
@@ -21,41 +21,25 @@ export async function GET(
     const session = await getServerSession(authOptions);
     const currentUserId = session?.user?.id;
 
-    const replies = await db.query.bbsReplies.findMany({
-      where: and(eq(bbsReplies.postId, postId), eq(bbsReplies.isDeleted, false)),
-      orderBy: [asc(bbsReplies.createdAt)], // Chronological order for replies
-      with: {
-        author: {
-          columns: {
-            id: true,
-            name: true,
-            image: true,
-          },
-          with: {
-            bbsUserProfile: {
-              columns: {
-                nickname: true,
-                bbsRole: true,
-              }
-            }
-          }
-        },
-        likes: {
-          columns: {
-            userId: true,
-          }
-        }
-      }
-    });
+    const rawReplies = await db.select().from(bbsReplies).where(and(eq(bbsReplies.postId, postId), eq(bbsReplies.isDeleted, false))).orderBy(asc(bbsReplies.createdAt));
+    
+    const replyIds = rawReplies.map(r => r.id);
+    const authorIds = [...new Set(rawReplies.map(r => r.userId))];
 
-    const formattedReplies = replies.map(reply => {
-      // @ts-ignore
-      const profile = reply.author?.bbsUserProfile?.[0] || reply.author?.bbsUserProfile;
+    const { bbsLikes } = await import("@/lib/schema/bbs");
+    const { users: schemaUsers } = await import("@/lib/schema");
+
+    const authorsData = authorIds.length > 0 ? await db.select().from(schemaUsers).where(inArray(schemaUsers.id, authorIds)) : [];
+    const profilesData = authorIds.length > 0 ? await db.select().from(bbsUserProfiles).where(inArray(bbsUserProfiles.userId, authorIds)) : [];
+    const likesData = replyIds.length > 0 ? await db.select({ userId: bbsLikes.userId, replyId: bbsLikes.replyId }).from(bbsLikes).where(inArray(bbsLikes.replyId, replyIds)) : [];
+
+    const formattedReplies = rawReplies.map(reply => {
+      const author = authorsData.find(a => a.id === reply.userId);
+      const profile = profilesData.find(p => p.userId === reply.userId);
+      const replyLikes = likesData.filter(l => l.replyId === reply.id);
       
-      // @ts-ignore
-      const likeCount = reply.likes?.length || 0;
-      // @ts-ignore
-      const isLiked = currentUserId ? reply.likes?.some(like => like.userId === currentUserId) : false;
+      const likeCount = replyLikes.length;
+      const isLiked = currentUserId ? replyLikes.some(like => like.userId === currentUserId) : false;
       
       return {
         id: reply.id,
@@ -64,9 +48,9 @@ export async function GET(
         likeCount,
         isLiked,
         author: {
-          id: reply.author.id,
-          name: profile?.nickname || reply.author.name || "Unknown",
-          image: reply.author.image,
+          id: author?.id || reply.userId,
+          name: profile?.nickname || author?.name || "Unknown",
+          image: author?.image || null,
           role: profile?.bbsRole || "member"
         }
       };

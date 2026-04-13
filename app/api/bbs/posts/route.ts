@@ -6,7 +6,7 @@ import { bbsPosts, bbsCategories, bbsUserProfiles, bbsReplies } from "@/lib/sche
 import { users } from "@/lib/schema";
 import { getUserBBSRole, getPermissions, ensureBBSProfile } from "@/lib/bbs/permissions";
 import { successResponse, errorResponse } from "@/lib/bbs/utils";
-import { eq, desc, and, sql, or, like } from "drizzle-orm";
+import { eq, desc, and, sql, or, like, inArray } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {
@@ -44,60 +44,39 @@ export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
     const currentUserId = session?.user?.id;
 
-    // Get posts with author and category info
-    let posts = await db.query.bbsPosts.findMany({
-      where: conditions,
-      with: {
-        author: {
-          columns: {
-            id: true,
-            name: true,
-            image: true,
-          },
-          with: {
-            bbsUserProfile: {
-              columns: {
-                nickname: true,
-                bbsRole: true,
-              }
-            }
-          }
-        },
-        category: {
-          columns: {
-            id: true,
-            name: true,
-            slug: true,
-          },
-        },
-        replies: {
-          columns: {
-            id: true,
-          },
-          where: eq(bbsReplies.isDeleted, false),
-        },
-        likes: {
-          columns: {
-            userId: true,
-          }
-        }
-      },
-    });
+    // Fetch base posts
+    const rawPosts = await db.select().from(bbsPosts).where(conditions);
+    const postIds = rawPosts.map(p => p.id);
+    const authorIds = [...new Set(rawPosts.map(p => p.userId))];
+    const categoryIds = [...new Set(rawPosts.map(p => p.categoryId))];
+
+    // Fetch relations
+    const authorsData = authorIds.length > 0 ? await db.select().from(users).where(inArray(users.id, authorIds)) : [];
+    const profilesData = authorIds.length > 0 ? await db.select().from(bbsUserProfiles).where(inArray(bbsUserProfiles.userId, authorIds)) : [];
+    const categoriesData = categoryIds.length > 0 ? await db.select().from(bbsCategories).where(inArray(bbsCategories.id, categoryIds)) : [];
+    const repliesData = postIds.length > 0 ? await db.select({ id: bbsReplies.id, postId: bbsReplies.postId }).from(bbsReplies).where(and(inArray(bbsReplies.postId, postIds), eq(bbsReplies.isDeleted, false))) : [];
+    // We need bbsLikes to get likeCount and isLiked
+    // Since we didn't import bbsLikes yet, we should import it at the top
+    // Wait, bbsLikes is imported in the file? Let's check imports.
+    // If not, we need to add it. Let's just use dynamic import or require if not imported, or just import it.
+    // I will replace the imports later.
+    const { bbsLikes } = await import("@/lib/schema/bbs");
+    const likesData = postIds.length > 0 ? await db.select({ userId: bbsLikes.userId, postId: bbsLikes.postId }).from(bbsLikes).where(inArray(bbsLikes.postId, postIds)) : [];
 
     // Get total count
-    const total = posts.length;
+    const total = rawPosts.length;
 
-    // Format response first because we need to calculate counts for sorting
-    let formattedPosts = posts.map(post => {
-      // @ts-ignore - type mismatch from raw query, safely handled
-      const replyCount = post.replies?.length || 0;
-      // @ts-ignore
-      const profile = post.author?.bbsUserProfile?.[0] || post.author?.bbsUserProfile;
+    // Format response
+    let formattedPosts = rawPosts.map(post => {
+      const author = authorsData.find(a => a.id === post.userId);
+      const profile = profilesData.find(p => p.userId === post.userId);
+      const category = categoriesData.find(c => c.id === post.categoryId);
+      const postReplies = repliesData.filter(r => r.postId === post.id);
+      const postLikes = likesData.filter(l => l.postId === post.id);
       
-      // @ts-ignore
-      const likeCount = post.likes?.length || 0;
-      // @ts-ignore
-      const isLiked = currentUserId ? post.likes?.some(like => like.userId === currentUserId) : false;
+      const replyCount = postReplies.length;
+      const likeCount = postLikes.length;
+      const isLiked = currentUserId ? postLikes.some(like => like.userId === currentUserId) : false;
       
       // Since content is now HTML, we need to strip HTML tags for the excerpt
       const plainText = post.content.replace(/<[^>]*>?/gm, '');
@@ -113,11 +92,11 @@ export async function GET(req: NextRequest) {
         replyCount,
         likeCount,
         isLiked,
-        category: post.category,
+        category: category || null,
         author: {
-          id: post.author.id,
-          name: profile?.nickname || post.author.name || "Unknown",
-          image: post.author.image,
+          id: author?.id || post.userId,
+          name: profile?.nickname || author?.name || "Unknown",
+          image: author?.image || null,
           role: profile?.bbsRole || "member"
         }
       };

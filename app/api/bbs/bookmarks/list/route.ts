@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { bbsBookmarks, bbsPosts, bbsReplies } from "@/lib/schema/bbs";
 import { errorResponse } from "@/lib/bbs/utils";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, inArray, and } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,66 +19,38 @@ export async function GET(req: NextRequest) {
     const offset = (page - 1) * limit;
 
     // Get bookmarks with post data
-    const bookmarks = await db.query.bbsBookmarks.findMany({
-      where: eq(bbsBookmarks.userId, session.user.id),
-      limit,
-      offset,
-      orderBy: [desc(bbsBookmarks.createdAt)],
-      with: {
-        post: {
-          with: {
-            author: {
-              columns: {
-                id: true,
-                name: true,
-                image: true,
-              },
-              with: {
-                bbsUserProfile: {
-                  columns: {
-                    nickname: true,
-                    bbsRole: true,
-                  }
-                }
-              }
-            },
-            category: {
-              columns: {
-                id: true,
-                name: true,
-                slug: true,
-              },
-            },
-            replies: {
-              columns: {
-                id: true,
-              },
-              where: eq(bbsReplies.isDeleted, false),
-            },
-            likes: {
-              columns: {
-                userId: true,
-              }
-            }
-          }
-        }
-      }
-    });
+    const bookmarks = await db.select().from(bbsBookmarks).where(eq(bbsBookmarks.userId, session.user.id)).orderBy(desc(bbsBookmarks.createdAt)).limit(limit).offset(offset);
 
-    // Format response and filter out soft-deleted posts
+    const postIds = bookmarks.map(bm => bm.postId);
+    const rawPosts = postIds.length > 0 ? await db.select().from(bbsPosts).where(and(inArray(bbsPosts.id, postIds), eq(bbsPosts.isDeleted, false))) : [];
+
+    const authorIds = [...new Set(rawPosts.map(p => p.userId))];
+    const categoryIds = [...new Set(rawPosts.map(p => p.categoryId))];
+
+    const { bbsCategories, bbsUserProfiles, bbsLikes } = await import("@/lib/schema/bbs");
+    const { users: schemaUsers } = await import("@/lib/schema");
+
+    const authorsData = authorIds.length > 0 ? await db.select().from(schemaUsers).where(inArray(schemaUsers.id, authorIds)) : [];
+    const profilesData = authorIds.length > 0 ? await db.select().from(bbsUserProfiles).where(inArray(bbsUserProfiles.userId, authorIds)) : [];
+    const categoriesData = categoryIds.length > 0 ? await db.select().from(bbsCategories).where(inArray(bbsCategories.id, categoryIds)) : [];
+    const repliesData = postIds.length > 0 ? await db.select({ postId: bbsReplies.postId }).from(bbsReplies).where(and(inArray(bbsReplies.postId, postIds), eq(bbsReplies.isDeleted, false))) : [];
+    const likesData = postIds.length > 0 ? await db.select({ userId: bbsLikes.userId, postId: bbsLikes.postId }).from(bbsLikes).where(inArray(bbsLikes.postId, postIds)) : [];
+
     const currentUserId = session.user.id;
     const formattedPosts = bookmarks
-      .filter(bm => bm.post && !bm.post.isDeleted)
       .map(bm => {
-        const post = bm.post;
-        // @ts-ignore
-        const replyCount = post.replies?.length || 0;
-        // @ts-ignore
-        const profile = post.author?.bbsUserProfile?.[0] || post.author?.bbsUserProfile;
-        // @ts-ignore
-        const likeCount = post.likes?.length || 0;
-        // @ts-ignore
-        const isLiked = post.likes?.some(like => like.userId === currentUserId) || false;
+        const post = rawPosts.find(p => p.id === bm.postId);
+        if (!post) return null;
+
+        const author = authorsData.find(a => a.id === post.userId);
+        const profile = profilesData.find(p => p.userId === post.userId);
+        const category = categoriesData.find(c => c.id === post.categoryId);
+        const postReplies = repliesData.filter(r => r.postId === post.id);
+        const postLikes = likesData.filter(l => l.postId === post.id);
+
+        const replyCount = postReplies.length;
+        const likeCount = postLikes.length;
+        const isLiked = postLikes.some(like => like.userId === currentUserId);
 
         // Since content is now HTML, we need to strip HTML tags for the excerpt
         const plainText = post.content.replace(/<[^>]*>?/gm, '');
@@ -95,15 +67,16 @@ export async function GET(req: NextRequest) {
           replyCount,
           likeCount,
           isLiked,
-          category: post.category,
+          category: category || null,
           author: {
-            id: post.author.id,
-            name: profile?.nickname || post.author.name || "Unknown",
-            image: post.author.image,
+            id: author?.id || post.userId,
+            name: profile?.nickname || author?.name || "Unknown",
+            image: author?.image || null,
             role: profile?.bbsRole || "member"
           }
         };
-      });
+      })
+      .filter(Boolean);
 
     return NextResponse.json({
       success: true,

@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { bbsPosts, bbsReplies } from "@/lib/schema/bbs";
 import { getUserBBSRole, getPermissions } from "@/lib/bbs/permissions";
 import { successResponse, errorResponse } from "@/lib/bbs/utils";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 
 export async function GET(
   req: NextRequest,
@@ -21,77 +21,39 @@ export async function GET(
     const session = await getServerSession(authOptions);
     const currentUserId = session?.user?.id;
 
-    const post = await db.query.bbsPosts.findFirst({
-      where: and(eq(bbsPosts.id, postId), eq(bbsPosts.isDeleted, false)),
-      with: {
-        author: {
-          columns: {
-            id: true,
-            name: true,
-            image: true,
-          },
-          with: {
-            bbsUserProfile: {
-              columns: {
-                nickname: true,
-                bbsRole: true,
-              },
-            },
-          },
-        },
-        category: {
-          columns: {
-            id: true,
-            name: true,
-            slug: true,
-          },
-        },
-        replies: {
-          columns: {
-            id: true,
-          },
-          where: eq(bbsReplies.isDeleted, false),
-        },
-        likes: {
-          columns: {
-            userId: true,
-          }
-        },
-        bookmarks: {
-          columns: {
-            userId: true,
-          }
-        }
-      },
-    });
+    const [post] = await db.select().from(bbsPosts).where(and(eq(bbsPosts.id, postId), eq(bbsPosts.isDeleted, false))).limit(1);
 
     if (!post) {
       return errorResponse("Not Found", "Post not found", 404);
     }
 
-    // @ts-ignore
-    const profile = post.author?.bbsUserProfile?.[0] || post.author?.bbsUserProfile;
-    // @ts-ignore
-    const likeCount = post.likes?.length || 0;
-    // @ts-ignore
-    const isLiked = currentUserId ? post.likes?.some(like => like.userId === currentUserId) : false;
-    // @ts-ignore
-    const isBookmarked = currentUserId ? post.bookmarks?.some(bm => bm.userId === currentUserId) : false;
+    const { bbsCategories, bbsUserProfiles, bbsLikes, bbsBookmarks } = await import("@/lib/schema/bbs");
+    const { users: schemaUsers } = await import("@/lib/schema");
+
+    const [author] = await db.select().from(schemaUsers).where(eq(schemaUsers.id, post.userId)).limit(1);
+    const [profile] = await db.select().from(bbsUserProfiles).where(eq(bbsUserProfiles.userId, post.userId)).limit(1);
+    const [category] = await db.select().from(bbsCategories).where(eq(bbsCategories.id, post.categoryId)).limit(1);
+    const postReplies = await db.select({ id: bbsReplies.id }).from(bbsReplies).where(and(eq(bbsReplies.postId, postId), eq(bbsReplies.isDeleted, false)));
+    const postLikes = await db.select({ userId: bbsLikes.userId }).from(bbsLikes).where(eq(bbsLikes.postId, postId));
+    const postBookmarks = await db.select({ userId: bbsBookmarks.userId }).from(bbsBookmarks).where(eq(bbsBookmarks.postId, postId));
+
+    const likeCount = postLikes.length;
+    const isLiked = currentUserId ? postLikes.some(like => like.userId === currentUserId) : false;
+    const isBookmarked = currentUserId ? postBookmarks.some(bm => bm.userId === currentUserId) : false;
 
     const formattedPost = {
       ...post,
-      // @ts-ignore
-      replyCount: post.replies?.length || 0,
+      replyCount: postReplies.length,
       likeCount,
       isLiked,
       isBookmarked,
       author: {
-        id: post.author.id,
-        name: profile?.nickname || post.author.name || "Unknown",
-        image: post.author.image,
+        id: author?.id || post.userId,
+        name: profile?.nickname || author?.name || "Unknown",
+        image: author?.image || null,
         role: profile?.bbsRole || "member",
       },
-      replies: undefined // Remove the raw replies array from response
+      category: category || null
     };
 
     // Note: We don't increment view count here because Next.js App Router GET requests 
