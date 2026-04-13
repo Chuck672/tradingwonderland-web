@@ -11,12 +11,12 @@ export default function ResourcesPage() {
 
   const courses = [
     { title: t("courses.c1.title"), desc: t("courses.c1.desc"), href: "/resources/psychology" },
-    { title: t("courses.c2.title"), desc: t("courses.c2.desc"), href: "/priceaction_course.html" },
-    { title: t("courses.c3.title"), desc: t("courses.c3.desc"), href: "/volumeprofile_course.html" },
-    { title: t("courses.c4.title"), desc: t("courses.c4.desc"), href: "/priceaction_manual.html" },
-    { title: t("courses.c5.title"), desc: t("courses.c5.desc"), href: "/tradingsystemv2p0.html" },
-    { title: t("courses.c6.title"), desc: t("courses.c6.desc"), href: "/trading-journal.html" },
-    { title: t("courses.c7.title"), desc: t("courses.c7.desc"), href: "/pretrade-checklist.html" },
+    { title: t("courses.c2.title"), desc: t("courses.c2.desc"), href: "/resources/priceaction-course" },
+    { title: t("courses.c3.title"), desc: t("courses.c3.desc"), href: "/resources/volumeprofile-course" },
+    { title: t("courses.c4.title"), desc: t("courses.c4.desc"), href: "/resources/priceaction-manual" },
+    { title: t("courses.c5.title"), desc: t("courses.c5.desc"), href: "/resources/tradingsystem" },
+    { title: t("courses.c6.title"), desc: t("courses.c6.desc"), href: "/resources/trading-journal" },
+    { title: t("courses.c7.title"), desc: t("courses.c7.desc"), href: "/resources/pretrade-checklist" },
   ];
 
   const strategies = [
