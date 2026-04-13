@@ -10,13 +10,13 @@ export default function ResourcesPage() {
   const { t } = useLanguage();
 
   const courses = [
-    { title: t("courses.c1.title"), desc: t("courses.c1.desc"), href: "/resources/psychology" },
-    { title: t("courses.c2.title"), desc: t("courses.c2.desc"), href: "/resources/priceaction-course" },
-    { title: t("courses.c3.title"), desc: t("courses.c3.desc"), href: "/resources/volumeprofile-course" },
-    { title: t("courses.c4.title"), desc: t("courses.c4.desc"), href: "/resources/priceaction-manual" },
-    { title: t("courses.c5.title"), desc: t("courses.c5.desc"), href: "/resources/tradingsystem" },
-    { title: t("courses.c6.title"), desc: t("courses.c6.desc"), href: "/resources/trading-journal" },
-    { title: t("courses.c7.title"), desc: t("courses.c7.desc"), href: "/resources/pretrade-checklist" },
+    { title: t("courses.c1.title"), desc: t("courses.c1.desc"), href: "/resources/psychology", isRaw: false },
+    { title: t("courses.c2.title"), desc: t("courses.c2.desc"), href: "/resources/priceaction-course", isRaw: true },
+    { title: t("courses.c3.title"), desc: t("courses.c3.desc"), href: "/resources/volumeprofile-course", isRaw: true },
+    { title: t("courses.c4.title"), desc: t("courses.c4.desc"), href: "/resources/priceaction-manual", isRaw: true },
+    { title: t("courses.c5.title"), desc: t("courses.c5.desc"), href: "/resources/tradingsystem", isRaw: true },
+    { title: t("courses.c6.title"), desc: t("courses.c6.desc"), href: "/resources/trading-journal", isRaw: true },
+    { title: t("courses.c7.title"), desc: t("courses.c7.desc"), href: "/resources/pretrade-checklist", isRaw: true },
   ];
 
   const strategies = [
@@ -53,7 +53,7 @@ export default function ResourcesPage() {
                   <CardDescription className="mt-2">{course.desc}</CardDescription>
                 </CardHeader>
                 <CardFooter className="justify-center mt-auto pb-6">
-                  {course.href.endsWith('.html') ? (
+                  {course.isRaw ? (
                     <a href={course.href} target="_blank" rel="noopener noreferrer" className="w-full">
                       <Button variant="outline" className="border-[#00ff88] text-[#00ff88] hover:bg-[#00ff88] hover:text-black w-full">
                         {t("btn.start")}

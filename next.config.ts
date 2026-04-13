@@ -8,6 +8,34 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  async rewrites() {
+    return [
+      {
+        source: '/resources/priceaction-course',
+        destination: '/priceaction_course.html',
+      },
+      {
+        source: '/resources/volumeprofile-course',
+        destination: '/volumeprofile_course.html',
+      },
+      {
+        source: '/resources/priceaction-manual',
+        destination: '/priceaction_manual.html',
+      },
+      {
+        source: '/resources/tradingsystem',
+        destination: '/tradingsystemv2p0.html',
+      },
+      {
+        source: '/resources/trading-journal',
+        destination: '/trading-journal.html',
+      },
+      {
+        source: '/resources/pretrade-checklist',
+        destination: '/pretrade-checklist.html',
+      },
+    ];
+  },
   // Allow access to remote image placeholder.
   images: {
     remotePatterns: [
