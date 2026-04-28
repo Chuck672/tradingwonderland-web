@@ -4,6 +4,8 @@ import { LanguageProvider } from '@/components/language-provider';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { AuthProvider } from '@/components/auth-provider';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 export const metadata: Metadata = {
   title: {
@@ -40,7 +42,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({children}: {children: React.ReactNode}) {
+export default async function RootLayout({children}: {children: React.ReactNode}) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="zh-CN">
       <head>
@@ -82,7 +86,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         />
       </head>
       <body suppressHydrationWarning className="antialiased flex flex-col min-h-screen">
-        <AuthProvider>
+        <AuthProvider session={session}>
           <LanguageProvider>
             <Navbar />
             <main className="pt-16 flex-grow">
