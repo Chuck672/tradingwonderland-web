@@ -62,14 +62,10 @@ export async function GET(req: NextRequest) {
     const basePath = process.env.PWD || process.cwd();
     const filePath = path.join(basePath, "private-tools", toolConfig.filename);
 
-    console.log(`[API_DOWNLOAD] Attempting to read file from: ${filePath}`);
-
     if (!existsSync(filePath)) {
-      console.error(`[API_DOWNLOAD] File not found: ${filePath}`);
       // Fallback 1: Try alternative path mapping just in case of Next.js server standalone output structure
       const altPath = path.join(process.cwd(), ".next", "standalone", "private-tools", toolConfig.filename);
       if (existsSync(altPath)) {
-        console.log(`[API_DOWNLOAD] File found at alternative path: ${altPath}`);
         const altFileBuffer = await readFile(altPath);
         return new NextResponse(altFileBuffer, {
           headers: {
@@ -85,7 +81,6 @@ export async function GET(req: NextRequest) {
       // Hostinger often puts files one directory up or in specific web roots
       const fallbackPath3 = path.join(process.cwd(), "..", "private-tools", toolConfig.filename);
       if (existsSync(fallbackPath3)) {
-        console.log(`[API_DOWNLOAD] File found at fallback path 3 (..): ${fallbackPath3}`);
         const fallbackBuffer3 = await readFile(fallbackPath3);
         return new NextResponse(fallbackBuffer3, {
           headers: {

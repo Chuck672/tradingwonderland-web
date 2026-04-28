@@ -8,6 +8,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://quantlogiclab.com'),
   title: {
     default: '量化逻辑实验室 (QuantLogicLab) - 专注量化数据分析与 MQL5 编程教学',
     template: '%s | 量化逻辑实验室 (QuantLogicLab)',
@@ -39,6 +40,21 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'zh_CN',
     siteName: '量化逻辑实验室 (QuantLogicLab)',
+    url: 'https://quantlogiclab.com/',
+    images: [
+      {
+        url: '/favicon.png',
+        width: 512,
+        height: 512,
+        alt: 'QuantLogicLab',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: '量化逻辑实验室 (QuantLogicLab)',
+    description: '提供时间序列数据建模、MQL5 编程教学、原始 Tick 数据可视化工具与量化分析策略库。',
+    images: ['/favicon.png'],
   },
 };
 

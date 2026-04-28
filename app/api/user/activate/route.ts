@@ -4,9 +4,14 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activationCodes, users } from "@/lib/schema";
 import { eq, sql } from "drizzle-orm";
+import { isAllowedOrigin } from "@/lib/security";
 
 export async function POST(req: NextRequest) {
   try {
+    if (!isAllowedOrigin(req)) {
+      return NextResponse.json({ success: false, message: "非法请求来源" }, { status: 403 });
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id || !session.user.email) {
       return NextResponse.json({ success: false, message: "请先登录" }, { status: 401 });

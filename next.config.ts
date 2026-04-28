@@ -2,11 +2,100 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: false,
+  },
+  async headers() {
+    const isProd = process.env.NODE_ENV === 'production';
+
+    const securityHeaders = [
+      {
+        key: 'X-Content-Type-Options',
+        value: 'nosniff',
+      },
+      {
+        key: 'Referrer-Policy',
+        value: 'strict-origin-when-cross-origin',
+      },
+      {
+        key: 'Permissions-Policy',
+        value: 'camera=(), microphone=(), geolocation=(), payment=()',
+      },
+      {
+        key: 'Cross-Origin-Opener-Policy',
+        value: 'same-origin',
+      },
+      {
+        key: 'Cross-Origin-Resource-Policy',
+        value: 'same-origin',
+      },
+      {
+        key: 'X-DNS-Prefetch-Control',
+        value: 'on',
+      },
+      ...(isProd
+        ? [
+            {
+              key: 'Strict-Transport-Security',
+              value: 'max-age=31536000; includeSubDomains; preload',
+            },
+          ]
+        : []),
+      {
+        key: 'Content-Security-Policy',
+        value: [
+          "default-src 'self'",
+          "base-uri 'self'",
+          "form-action 'self'",
+          "frame-ancestors 'none'",
+          "object-src 'none'",
+          "img-src 'self' data: https:",
+          "font-src 'self' data: https:",
+          "style-src 'self' 'unsafe-inline' https:",
+          `script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"} https:`,
+          "connect-src 'self' https:",
+          ...(isProd ? ['upgrade-insecure-requests'] : []),
+        ].join('; '),
+      },
+    ];
+
+    return [
+      {
+        source: '/:path*',
+        headers: securityHeaders,
+      },
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/uploads/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=2592000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/:file(.*\\.html)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400',
+          },
+        ],
+      },
+    ];
   },
   async rewrites() {
     return [
