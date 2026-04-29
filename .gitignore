@@ -51,10 +51,6 @@ tradingsystemv2p0/node_modules/
 tradingsystemv2p0/dist/
 tradingsystemv2p0/.env*
 
-# Private Tools Storage
-private-tools/*
-!private-tools/.gitkeep
-
 # Docs and non-website files
 *.md
 *.MD
