@@ -10,12 +10,12 @@ import { existsSync } from "fs";
 
 // 核心配置文件：工具 ID 对应的真实文件名和权限等级
 const TOOLS_CONFIG: Record<string, { filename: string; level: number }> = {
-  "SVP5_pro": { filename: "SessionVP_OldNewMoney_v4.ex5", level: 1 },
+  "SVP5_pro": { filename: "SVP5_pro.ex5", level: 1 },
   "inRangeVP": { filename: "inRangeVP.ex5", level: 1 },
-  "scalpTradingPanel": { filename: "scalpQuickPanelV11.ex5", level: 1 },
-  "strengthBubble_pro": { filename: "DeltaVolumeBubbleV9.ex5", level: 1 },
-  "Trend_Panel9_pro": { filename: "5of8_TrendPanel_v9.ex5", level: 1 },
-  "microOrderFlow": { filename: "microOrderFlow_v11.ex5", level: 1 },
+  "scalpTradingPanel": { filename: "scalpTradingPanel.ex5", level: 1 },
+  "strengthBubble_pro": { filename: "strengthBubble_pro.ex5", level: 1 },
+  "Trend_Panel9_pro": { filename: "Trend_Panel9_pro.ex5", level: 1 },
+  "microOrderFlow": { filename: "microOrderFlow.ex5", level: 1 },
 };
 
 export async function GET(req: NextRequest) {

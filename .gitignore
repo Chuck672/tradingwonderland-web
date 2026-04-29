@@ -54,7 +54,6 @@ tradingsystemv2p0/.env*
 # Private Tools Storage
 private-tools/*
 !private-tools/.gitkeep
-!private-tools/*.ex5
 
 # Docs and non-website files
 *.md
