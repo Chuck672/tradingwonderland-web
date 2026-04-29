@@ -18,6 +18,33 @@ const TOOLS_CONFIG: Record<string, { filename: string; level: number }> = {
   "microOrderFlow": { filename: "microOrderFlow_v11.ex5", level: 1 },
 };
 
+function resolveToolFilePath(filename: string) {
+  const candidates: string[] = [];
+
+  if (process.env.PRIVATE_TOOLS_DIR) {
+    candidates.push(path.join(process.env.PRIVATE_TOOLS_DIR, filename));
+  }
+
+  if (process.env.PWD) {
+    candidates.push(path.join(process.env.PWD, "private-tools", filename));
+  }
+
+  const cwd = process.cwd();
+  candidates.push(path.join(cwd, "private-tools", filename));
+  candidates.push(path.join(cwd, "..", "private-tools", filename));
+  candidates.push(path.join(cwd, "..", "..", "private-tools", filename));
+
+  candidates.push(path.join(cwd, ".next", "standalone", "private-tools", filename));
+  candidates.push(path.join(cwd, "..", ".next", "standalone", "private-tools", filename));
+  candidates.push(path.join(cwd, "..", "..", ".next", "standalone", "private-tools", filename));
+
+  for (const p of candidates) {
+    if (existsSync(p)) return p;
+  }
+
+  return null;
+}
+
 export async function GET(req: NextRequest) {
   try {
     // 1. 鉴权：获取当前登录用户的 Session
@@ -57,45 +84,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, message: "您的会员等级不足或已过期，请续费后下载" }, { status: 403 });
     }
 
-    // 5. 读取私有文件
-    // process.cwd() 在某些部署环境可能发生偏移，改用 __dirname 向上追溯，或者直接用 process.env.PWD 结合兜底
-    const basePath = process.env.PWD || process.cwd();
-    const filePath = path.join(basePath, "private-tools", toolConfig.filename);
-
-    if (!existsSync(filePath)) {
-      // Fallback 1: Try alternative path mapping just in case of Next.js server standalone output structure
-      const altPath = path.join(process.cwd(), ".next", "standalone", "private-tools", toolConfig.filename);
-      if (existsSync(altPath)) {
-        const altFileBuffer = await readFile(altPath);
-        return new NextResponse(altFileBuffer, {
-          headers: {
-            "Content-Type": "application/octet-stream",
-            "Content-Disposition": `attachment; filename="${toolConfig.filename}"`,
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Content-Length": altFileBuffer.length.toString(),
-          },
-        });
-      }
-
-      // Fallback 2: Check if process.cwd() is inside public_html or nodejs and search relative to it
-      // Hostinger often puts files one directory up or in specific web roots
-      const fallbackPath3 = path.join(process.cwd(), "..", "private-tools", toolConfig.filename);
-      if (existsSync(fallbackPath3)) {
-        const fallbackBuffer3 = await readFile(fallbackPath3);
-        return new NextResponse(fallbackBuffer3, {
-          headers: {
-            "Content-Type": "application/octet-stream",
-            "Content-Disposition": `attachment; filename="${toolConfig.filename}"`,
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Content-Length": fallbackBuffer3.length.toString(),
-          },
-        });
-      }
-
-      return NextResponse.json({ success: false, message: "工具文件正在更新中，请稍后再试" }, { status: 404 });
+    const resolvedPath = resolveToolFilePath(toolConfig.filename);
+    if (!resolvedPath) {
+      return NextResponse.json(
+        { success: false, message: "工具文件未部署到服务器，请等待部署完成后重试" },
+        { status: 404 }
+      );
     }
 
-    const fileBuffer = await readFile(filePath);
+    const fileBuffer = await readFile(resolvedPath);
 
     // 6. 构造返回流，伪装成直接下载文件
     return new NextResponse(fileBuffer, {
