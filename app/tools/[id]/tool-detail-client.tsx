@@ -7,7 +7,7 @@ import Link from "next/link";
 import { motion } from "motion/react";
 
 export default function ToolDetailClient({ toolId }: { toolId: string }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // Find the tool title based on ID (simple mapping for now)
   const getToolTitle = () => {
@@ -18,6 +18,8 @@ export default function ToolDetailClient({ toolId }: { toolId: string }) {
       case "strengthBubble_pro": return t("tools.t4.title");
       case "Trend_Panel9_pro": return t("tools.t5.title");
       case "microOrderFlow": return t("tools.t6.title");
+      case "awesomeChart": return t("tools.t7.title");
+      case "awesomeTradingAgent": return t("tools.t8.title");
       default: return toolId;
     }
   };
@@ -30,6 +32,8 @@ export default function ToolDetailClient({ toolId }: { toolId: string }) {
       case "strengthBubble_pro": return t("tools.t4.desc");
       case "Trend_Panel9_pro": return t("tools.t5.desc");
       case "microOrderFlow": return t("tools.t6.desc");
+      case "awesomeChart": return t("tools.t7.desc");
+      case "awesomeTradingAgent": return t("tools.t8.desc");
       default: return "";
     }
   };
@@ -51,7 +55,20 @@ export default function ToolDetailClient({ toolId }: { toolId: string }) {
           <p className="text-xl text-gray-400">{getToolDesc()}</p>
         </div>
 
-        {toolId === "SVP5_pro" ? (
+        {toolId === "awesomeChart" || toolId === "awesomeTradingAgent" ? (
+          <div className="w-full aspect-video bg-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden relative flex items-center justify-center">
+            <div className="text-center px-8">
+              <div className="text-4xl text-[#00ff88] font-extrabold tracking-tight">
+                {getToolTitle()}
+              </div>
+              <div className="mt-3 text-gray-400">
+                {language === "zh"
+                  ? "详情页将持续补充演示视频与完整使用指南。"
+                  : "This page will be updated with demos and a complete usage guide."}
+              </div>
+            </div>
+          </div>
+        ) : toolId === "SVP5_pro" ? (
           <div className="w-full aspect-video bg-[#0a0a0a] border border-white/10 rounded-2xl overflow-hidden relative">
             <iframe
               className="absolute inset-0 w-full h-full"
@@ -113,6 +130,120 @@ export default function ToolDetailClient({ toolId }: { toolId: string }) {
             <p className="text-sm mt-2 opacity-60">(YouTube / Bilibili)</p>
           </div>
         )}
+
+        {toolId === "awesomeChart" ? (
+          <div className="prose prose-invert max-w-none pt-8 border-t border-white/10">
+            {language === "zh" ? (
+              <>
+                <h2 className="text-2xl">awesomeChart：复盘与图表增强工具</h2>
+                <p>面向复盘、策略验证与训练的一体化图表工具。目标是把“看图”的过程标准化：可回放、可记录、可对照、可复盘。</p>
+                <h3 className="text-xl mt-6">核心能力</h3>
+                <ul>
+                  <li>Bar Replay 动态回放：按 K 线逐步推进，训练入场与管理规则。</li>
+                  <li>指标跟随回放：回放过程中指标同步更新，避免“看完结果再解释”。</li>
+                  <li>复盘工作流：将截图、标记、结论整理成可复用模板。</li>
+                  <li>基础版 AI Chat：快速整理思路、提炼规则、复盘提纲（辅助，不替代决策）。</li>
+                  <li>高级指标组件：常用研究模块与可视化组件打包整合。</li>
+                  <li>Trading Calendar：按交易日历管理事件与复盘节奏。</li>
+                </ul>
+                <div className="mt-10 flex gap-4">
+                  <Link href="/subscribe">
+                    <Button className="bg-[#00ff88] text-black hover:bg-[#00cc6a] px-8">
+                      查看购买方案
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard">
+                    <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 px-8">
+                      前往个人中心
+                    </Button>
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl">awesomeChart: Review & Chart Enhancement</h2>
+                <p>An integrated charting tool designed for review, validation, and training. The goal is to standardize the “chart-reading” process with replay, notes, and structured review.</p>
+                <h3 className="text-xl mt-6">Key capabilities</h3>
+                <ul>
+                  <li>Bar Replay: step through candles to practice entries and trade management rules.</li>
+                  <li>Indicator-synced replay: indicators update as the replay progresses to reduce hindsight bias.</li>
+                  <li>Review workflow: turn screenshots, annotations, and conclusions into reusable templates.</li>
+                  <li>Basic AI chat: help structure thoughts and review notes (assistive, not decision-making).</li>
+                  <li>Premium indicator modules: bundled research components and visual widgets.</li>
+                  <li>Trading calendar: manage events and maintain a consistent review cadence.</li>
+                </ul>
+                <div className="mt-10 flex gap-4">
+                  <Link href="/subscribe">
+                    <Button className="bg-[#00ff88] text-black hover:bg-[#00cc6a] px-8">
+                      View Plans
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard">
+                    <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 px-8">
+                      Go to Dashboard
+                    </Button>
+                  </Link>
+                </div>
+              </>
+            )}
+          </div>
+        ) : null}
+
+        {toolId === "awesomeTradingAgent" ? (
+          <div className="prose prose-invert max-w-none pt-8 border-t border-white/10">
+            {language === "zh" ? (
+              <>
+                <h2 className="text-2xl">awesomeTradingAgent：AI 交易助理与自动标注系统</h2>
+                <p>将技术分析、指标与策略调用串起来，把“分析→结论→标记→复盘”固化为流程，降低重复劳动。</p>
+                <h3 className="text-xl mt-6">核心能力</h3>
+                <ul>
+                  <li>AI 技术分析：对关键结构、趋势、波动与风险点给出结构化摘要。</li>
+                  <li>自动调用指标/策略：按预设规则触发分析模块，减少手工切换。</li>
+                  <li>图表自动标记：将信号区域、关键价位、结构点自动绘制到图表。</li>
+                  <li>Trading Dashboard：集中查看表现、执行质量与关键统计。</li>
+                  <li>AI 教练（基于交易记录）：从执行一致性、风险控制、情绪偏差等角度给出改进建议。</li>
+                </ul>
+                <div className="mt-10 flex gap-4">
+                  <Link href="/subscribe">
+                    <Button className="bg-[#00ff88] text-black hover:bg-[#00cc6a] px-8">
+                      查看购买方案
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard">
+                    <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 px-8">
+                      前往个人中心
+                    </Button>
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl">awesomeTradingAgent: AI Assistant & Auto-Annotation</h2>
+                <p>Connect technical analysis, indicators, and strategy modules into a workflow, turning “analyze → conclude → annotate → review” into a repeatable process.</p>
+                <h3 className="text-xl mt-6">Key capabilities</h3>
+                <ul>
+                  <li>AI technical analysis: structured summaries of trend, structure, volatility, and risk points.</li>
+                  <li>Strategy-driven modules: trigger indicator/strategy analysis based on preset rules.</li>
+                  <li>Automatic chart annotations: mark zones, key levels, and structure points directly on the chart.</li>
+                  <li>Trading dashboard: a single place to track performance and execution quality.</li>
+                  <li>AI coach (based on your trade history): insights on consistency, risk control, and behavioral patterns.</li>
+                </ul>
+                <div className="mt-10 flex gap-4">
+                  <Link href="/subscribe">
+                    <Button className="bg-[#00ff88] text-black hover:bg-[#00cc6a] px-8">
+                      View Plans
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard">
+                    <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 px-8">
+                      Go to Dashboard
+                    </Button>
+                  </Link>
+                </div>
+              </>
+            )}
+          </div>
+        ) : null}
 
         {toolId === "SVP5_pro" ? (
           <div className="prose prose-invert max-w-none pt-8 border-t border-white/10">
