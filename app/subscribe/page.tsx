@@ -7,12 +7,11 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 
 export default function SubscribePage() {
-  const { t } = useLanguage();
+  useLanguage();
   const { data: session } = useSession();
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-slate-50 selection:bg-[#00ff88]/30 pt-32 pb-16 px-4 sm:px-6 lg:px-8">
-      {/* Header Section */}
       <div className="max-w-4xl mx-auto text-center mb-16 space-y-4">
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white">
           工具授权与课程赠送
@@ -23,9 +22,7 @@ export default function SubscribePage() {
         </div>
       </div>
 
-      {/* Pricing Cards */}
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 items-stretch">
-        {/* Free Plan */}
         <div className="relative group flex flex-col p-8 rounded-3xl bg-[#111111] border border-white/10 hover:border-[#00ff88]/30 transition-all duration-300 h-full">
           <div className="mb-6">
             <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
@@ -44,7 +41,7 @@ export default function SubscribePage() {
                 <Sparkles className="w-4 h-4 text-gray-400" /> 你将获得：
               </p>
               <ul className="space-y-3">
-                {["工具介绍与视频教程（公开部分）", "赠送课程的公开内容（自学）", "更新公告与重要通知", "隐私/条款等基础页面访问"].map((feature, i) => (
+                {["工具介绍与视频教程（公开部分）", "赠送课程的公开内容（自学）", "更新公告与重要通知", "基础页面访问（条款/隐私等）"].map((feature, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-gray-300">
                     <Check className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
                     <span className="leading-snug">{feature}</span>
@@ -83,7 +80,6 @@ export default function SubscribePage() {
           )}
         </div>
 
-        {/* Basic Pack */}
         <div className="relative group flex flex-col p-8 rounded-3xl bg-[#111111] border border-white/10 hover:border-[#00ff88]/50 transition-all duration-300 shadow-xl h-full">
           <div className="mb-6">
             <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
@@ -148,7 +144,6 @@ export default function SubscribePage() {
           </Link>
         </div>
 
-        {/* Bundle */}
         <div className="relative group flex flex-col p-8 rounded-3xl bg-gradient-to-b from-[#00ff88]/5 to-[#111111] border border-[#00ff88]/30 transition-all duration-300 shadow-[0_0_30px_rgba(0,255,136,0.1)] transform md:-translate-y-4 h-[calc(100%+1rem)]">
           <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#00ff88] rounded-full text-black text-xs font-bold uppercase tracking-wider whitespace-nowrap">
             最具价值推荐
@@ -251,7 +246,6 @@ export default function SubscribePage() {
           </div>
         </div>
       </div>
-      {/* Disclaimer */}
       <div className="max-w-4xl mx-auto text-center">
         <p className="text-xs text-slate-500 leading-relaxed border-t border-slate-800/50 pt-8">
           本页面所述工具与课程仅供学习研究与教育用途，不构成任何投资建议或交易信号。您应自行承担使用相关软件与策略所带来的全部风险。
