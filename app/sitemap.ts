@@ -11,6 +11,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "strengthBubble_pro",
     "Trend_Panel9_pro",
     "microOrderFlow",
+    "awesomeChart",
+    "awesomeTradingAgent",
   ];
 
   return [
