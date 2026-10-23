@@ -13,7 +13,7 @@ export default function ContactPage() {
     <div className="min-h-screen pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto bg-[#0a0a0a] relative">
       <Link href="/subscribe" className="inline-flex items-center text-gray-400 hover:text-[#00ff88] transition-colors mb-8">
         <ArrowLeft className="w-4 h-4 mr-2" />
-        返回订阅计划
+        返回购买页
       </Link>
 
       <motion.div

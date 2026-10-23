@@ -3,17 +3,14 @@ import { Button } from "@/components/ui/button";
 
 export default function SubscribeCancelPage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 py-12 text-center">
-      <div className="text-6xl mb-6">❌</div>
-      <h1 className="text-4xl md:text-5xl font-bold text-red-500 mb-4">支付已取消</h1>
+    <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 pt-28 pb-12 text-center">
+      <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">支付已取消</h1>
       <p className="text-gray-300 text-lg max-w-xl mx-auto mb-8">
-        您的支付流程已被取消，没有产生任何扣费。如果您在支付过程中遇到问题，请随时联系我们。
+        结账已取消，没有产生扣费。可以返回后重新选择 $149 或 $349。
       </p>
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-4 justify-center">
         <Link href="/subscribe">
-          <Button className="bg-[#00bfa5] text-black hover:bg-[#00bfa5]/80">
-            重新选择方案
-          </Button>
+          <Button className="bg-[#00ff88] text-black hover:bg-[#00cc6a]">返回购买页</Button>
         </Link>
         <Link href="/">
           <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
