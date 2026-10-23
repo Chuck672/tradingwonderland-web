@@ -4,8 +4,10 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Key, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { fillTemplate, translateError, useLanguage } from "@/components/language-provider";
 
 export default function ActivationRedeem() {
+  const { t } = useLanguage();
   const { update } = useSession();
   const router = useRouter();
   const [code, setCode] = useState("");
@@ -33,7 +35,7 @@ export default function ActivationRedeem() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!code || code.length < 15) {
-      setError("请输入完整的激活码");
+      setError(t("redeem.incomplete"));
       return;
     }
 
@@ -51,7 +53,9 @@ export default function ActivationRedeem() {
       const data = await res.json();
 
       if (data.success) {
-        setSuccess("激活成功！" + (data.message ? " " + data.message : ""));
+        const level = data.data?.level === 2 ? "ULTRA" : "PRO";
+        const date = typeof data.data?.vipUntil === "string" ? data.data.vipUntil : "";
+        setSuccess(fillTemplate(t("redeem.modal_body"), { level, date }));
         setCode("");
         // 强制刷新 NextAuth 会话
         await update();
@@ -60,10 +64,11 @@ export default function ActivationRedeem() {
         // 弹出自定义成功弹窗
         setShowModal(true);
       } else {
-        setError(data.message || "激活失败");
+        const code = typeof data.code === "string" ? data.code : "server";
+        setError(translateError(t, "api.err", code));
       }
-    } catch (err) {
-      setError("网络请求异常，请检查网络或稍后重试");
+    } catch {
+      setError(t("redeem.network"));
     } finally {
       setIsLoading(false);
     }
@@ -79,10 +84,8 @@ export default function ActivationRedeem() {
           <Key className="w-6 h-6" />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-white mb-1">兑换激活码 (CD-Key)</h3>
-          <p className="text-sm text-slate-400">
-            输入客服提供的激活码，立即解锁 PRO / ULTRA 专属权益。
-          </p>
+          <h3 className="text-xl font-bold text-white mb-1">{t("redeem.title")}</h3>
+          <p className="text-sm text-slate-400">{t("redeem.desc")}</p>
         </div>
       </div>
 
@@ -107,7 +110,7 @@ export default function ActivationRedeem() {
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                "立即激活"
+                t("redeem.submit")
               )}
             </button>
           </div>
@@ -125,7 +128,7 @@ export default function ActivationRedeem() {
           )}
         </div>
         <p className="text-xs text-slate-500">
-          * 激活码由系统生成，每个激活码仅可使用一次。激活后您的会员有效期将更新为全新的时长。
+          {t("redeem.note")}
         </p>
       </form>
 
@@ -136,7 +139,7 @@ export default function ActivationRedeem() {
             <div className="w-16 h-16 bg-[#00bfa5]/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle2 className="w-8 h-8 text-[#00bfa5]" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">兑换成功</h2>
+            <h2 className="text-2xl font-bold text-white mb-2">{t("redeem.modal_title")}</h2>
             <p className="text-slate-400 text-sm mb-6 leading-relaxed">
               {success}
             </p>
@@ -144,7 +147,7 @@ export default function ActivationRedeem() {
               onClick={() => setShowModal(false)}
               className="w-full py-3 bg-[#00bfa5] hover:bg-[#00bfa5]/90 text-slate-950 font-bold rounded-xl transition-colors"
             >
-              好的，去查看权益
+              {t("redeem.modal_ok")}
             </button>
           </div>
         </div>

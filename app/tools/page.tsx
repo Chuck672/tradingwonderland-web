@@ -7,7 +7,7 @@ import { motion } from "motion/react";
 import Link from "next/link";
 
 export default function ToolsPage() {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
 
   const mt5Tools = [
     { id: "SVP5_pro", title: t("tools.t1.title"), desc: t("tools.t1.desc") },
@@ -33,7 +33,7 @@ export default function ToolsPage() {
       <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-[#00ff88] mb-4">
-            {language === "zh" ? "MT5 指标工具 MT5 Indicators" : "MT5 Indicators"}
+            {t("tools.mt5_heading")}
           </h2>
           <div className="h-px w-full bg-white/20 max-w-4xl mx-auto"></div>
         </div>
@@ -68,7 +68,7 @@ export default function ToolsPage() {
       <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 mb-20">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-[#00ff88] mb-4">
-            {language === "zh" ? "高级图表工具 Advanced Chart Tools" : "Advanced Chart Tools"}
+            {t("tools.advanced_heading")}
           </h2>
           <div className="h-px w-full bg-white/20 max-w-4xl mx-auto"></div>
         </div>
@@ -103,9 +103,7 @@ export default function ToolsPage() {
       {/* Disclaimer Section */}
       <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 mb-10 text-center">
         <p className="text-gray-500 text-sm border-t border-white/10 pt-8 max-w-3xl mx-auto">
-          {language === "zh" ? 
-            "本工具仅供学习研究、历史回测与交易教育学习使用，不构成任何投资建议、交易信号或盈利保证。使用前请自行承担全部交易风险。" : 
-            "These tools are for learning, historical backtesting, and educational purposes only. They do not constitute any investment advice, trading signals, or guarantee of profitability. Please bear all trading risks independently before use."}
+          {t("tools.disclaimer")}
         </p>
       </section>
     </div>

@@ -10,11 +10,11 @@ import { authOptions } from '@/lib/auth';
 export const metadata: Metadata = {
   metadataBase: new URL('https://quantlogiclab.com'),
   title: {
-    default: '量化逻辑实验室 (QuantLogicLab) - 专注量化数据分析与 MQL5 编程教学',
-    template: '%s | 量化逻辑实验室 (QuantLogicLab)',
+    default: 'QuantLogicLab — Quantitative research and MQL5 education',
+    template: '%s | QuantLogicLab',
   },
-  description: '量化逻辑实验室 (QuantLogicLab) 提供时间序列数据建模、MQL5 编程教学、原始 Tick 数据可视化工具与量化分析策略库。专注于金融数据工程与算法逻辑开发，不提供投资建议。',
-  keywords: ['QuantLogicLab', '量化逻辑实验室', '数据建模', 'MQL5编程', '时间序列分析', '算法逻辑', 'Quantitative Analysis', 'Data Modeling', 'Algorithmic Logic', 'Tick Data Visualization'],
+  description: 'QuantLogicLab publishes quantitative research, MQL5 education, tick-data visualization tools, and a strategy research library. The material is for study and backtesting. It is not investment advice.',
+  keywords: ['QuantLogicLab', '量化逻辑实验室', 'Quantitative Analysis', 'MQL5', 'Data Modeling', 'Algorithmic Logic', 'Tick Data Visualization'],
   alternates: {
     canonical: "https://quantlogiclab.com",
     languages: {
@@ -35,11 +35,11 @@ export const metadata: Metadata = {
     shortcut: '/favicon.png',
   },
   openGraph: {
-    title: '量化逻辑实验室 (QuantLogicLab)',
-    description: '提供时间序列数据建模、MQL5 编程教学、原始 Tick 数据可视化工具与量化分析策略库。',
+    title: 'QuantLogicLab',
+    description: 'Quantitative research, MQL5 education, tick-data visualization, and a strategy research library. For study and backtesting, not investment advice.',
     type: 'website',
-    locale: 'zh_CN',
-    siteName: '量化逻辑实验室 (QuantLogicLab)',
+    locale: 'en_US',
+    siteName: 'QuantLogicLab',
     url: 'https://quantlogiclab.com/',
     images: [
       {
@@ -52,8 +52,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary',
-    title: '量化逻辑实验室 (QuantLogicLab)',
-    description: '提供时间序列数据建模、MQL5 编程教学、原始 Tick 数据可视化工具与量化分析策略库。',
+    title: 'QuantLogicLab',
+    description: 'Quantitative research, MQL5 education, tick-data visualization, and a strategy research library. For study and backtesting, not investment advice.',
     images: ['/favicon.png'],
   },
 };
@@ -62,7 +62,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
   const session = await getServerSession(authOptions);
 
   return (
-    <html lang="zh-CN">
+    <html lang="en">
       <head>
         <script
           type="application/ld+json"
@@ -70,12 +70,12 @@ export default async function RootLayout({children}: {children: React.ReactNode}
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebSite",
-              "name": "量化逻辑实验室",
-              "alternateName": "QuantLogicLab",
+              "name": "QuantLogicLab",
+              "alternateName": "量化逻辑实验室",
               "url": "https://quantlogiclab.com/",
               "publisher": {
                 "@type": "Organization",
-                "name": "量化逻辑实验室 (QuantLogicLab)",
+                "name": "QuantLogicLab",
                 "logo": {
                   "@type": "ImageObject",
                   "url": "https://quantlogiclab.com/favicon.png"
@@ -90,7 +90,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              "name": "量化逻辑实验室 (QuantLogicLab)",
+              "name": "QuantLogicLab",
               "url": "https://quantlogiclab.com/",
               "logo": "https://quantlogiclab.com/favicon.png",
               "sameAs": [

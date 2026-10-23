@@ -245,7 +245,8 @@ export default function ToolDetailClient({ toolId }: { toolId: string }) {
           </div>
         ) : null}
 
-        {toolId === "SVP5_pro" ? (
+        {language === "zh" ? (
+        toolId === "SVP5_pro" ? (
           <div className="prose prose-invert max-w-none pt-8 border-t border-white/10">
             <h2 className="text-2xl">产品简介：Session Volume Profile v5 (SVP5)</h2>
             <h3 className="text-xl mt-6">1. 核心理念：洞悉“新老资金”的博弈</h3>
@@ -716,6 +717,24 @@ export default function ToolDetailClient({ toolId }: { toolId: string }) {
               <Link href="/dashboard">
                 <Button className="bg-[#00ff88] text-black hover:bg-[#00cc6a] px-8">
                   前往个人中心下载
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )
+        ) : (
+          <div className="prose prose-invert max-w-none pt-8 border-t border-white/10">
+            <p>{getToolDesc()}</p>
+            <p>{t("tools.detail.en_note")}</p>
+            <div className="mt-10 flex gap-4">
+              <Link href="/subscribe">
+                <Button className="bg-[#00ff88] text-black hover:bg-[#00cc6a] px-8">
+                  {t("nav.subscribe")}
+                </Button>
+              </Link>
+              <Link href="/dashboard">
+                <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 px-8">
+                  {t("nav.dashboard")}
                 </Button>
               </Link>
             </div>

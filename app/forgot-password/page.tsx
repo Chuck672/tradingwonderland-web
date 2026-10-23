@@ -1,6 +1,6 @@
 "use client";
 
-import { useLanguage } from "@/components/language-provider";
+import { translateError, useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
       const result = await resetPassword(formData);
       
       if (result?.error) {
-        setError(result.error);
+        setError(translateError(t, "auth.err", result.error));
       } else {
         setSuccess(true);
       }

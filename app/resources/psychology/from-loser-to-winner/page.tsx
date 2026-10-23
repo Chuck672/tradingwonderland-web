@@ -12,7 +12,7 @@ export default function FromLoserToWinnerPage() {
     <div className="min-h-screen pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
       <Link href="/resources/psychology" className="inline-flex items-center text-gray-400 hover:text-[#00ff88] transition-colors mb-8">
         <ArrowLeft className="w-4 h-4 mr-2" />
-        返回列表
+        {t("psych.back")}
       </Link>
 
       <motion.article

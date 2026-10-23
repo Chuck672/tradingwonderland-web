@@ -1,6 +1,6 @@
 "use client";
 
-import { useLanguage } from "@/components/language-provider";
+import { fillTemplate, translateError, useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { users } from "@/lib/schema";
@@ -32,7 +32,7 @@ export default function DashboardClient({ user }: { user: User }) {
   const handleDownloadClick = async (toolId: string, toolLevel: number) => {
     // 再次双重检查权限
     if (membershipLevel < toolLevel || (user.vipUntil && new Date(user.vipUntil) < new Date())) {
-      alert(`您需要 ${toolLevel === 2 ? 'ULTRA' : 'PRO'} 会员才能下载此工具！`);
+      alert(fillTemplate(t("dashboard.alert_need_level"), { level: toolLevel === 2 ? "ULTRA" : "PRO" }));
       return;
     }
     
@@ -46,7 +46,9 @@ export default function DashboardClient({ user }: { user: User }) {
       if (!res.ok) {
         // 如果后端拦截（未登录、等级不够、文件不存在等），解析错误信息并抛出
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || "下载失败，请联系客服");
+        const code = typeof data?.code === "string" ? data.code : "server";
+        alert(translateError(t, "api.err", code));
+        return;
       }
 
       // 尝试从 Response Header 的 Content-Disposition 中提取真实文件名
@@ -75,7 +77,7 @@ export default function DashboardClient({ user }: { user: User }) {
 
     } catch (err: any) {
       console.error(err);
-      alert(err.message || t("dashboard.alert_download_fail"));
+      alert(t("dashboard.download_fail_support"));
     } finally {
       setLoading(false);
     }
@@ -102,7 +104,7 @@ export default function DashboardClient({ user }: { user: User }) {
     const result = await changePassword(formData);
     
     if (result?.error) {
-      setPasswordError(result.error);
+      setPasswordError(translateError(t, "auth.err", result.error));
     } else {
       alert(t("dashboard.password_success"));
       setIsPasswordModalOpen(false);
@@ -149,10 +151,10 @@ export default function DashboardClient({ user }: { user: User }) {
                 <Crown className={isPremium ? "text-[#00ff88] w-7 h-7" : "text-gray-500 w-7 h-7"} />
               </div>
               <div>
-                <h2 className="text-xl font-bold mb-1">会员状态</h2>
+                <h2 className="text-xl font-bold mb-1">{t("dashboard.membership")}</h2>
                 <p className="text-sm text-gray-400">
-                  当前等级: <span className={`font-bold ml-1 ${membershipLevel === 2 ? "text-purple-400" : isPremium ? "text-[#00ff88]" : "text-white"}`}>
-                    {!isPremium ? "免费会员" : membershipLevel === 2 ? "ULTRA 会员" : "PRO 会员"}
+                  {t("dashboard.level_label")}: <span className={`font-bold ml-1 ${membershipLevel === 2 ? "text-purple-400" : isPremium ? "text-[#00ff88]" : "text-white"}`}>
+                    {!isPremium ? t("dashboard.free_member") : membershipLevel === 2 ? t("dashboard.ultra_member") : t("dashboard.pro_member")}
                   </span>
                 </p>
               </div>
@@ -172,7 +174,7 @@ export default function DashboardClient({ user }: { user: User }) {
                     : "text-[#00ff88] bg-[#00ff88]/10 border-[#00ff88]/20"
                 }`}>
                   <CheckCircle2 size={16} />
-                  <span>已解锁{membershipLevel === 2 ? "所有顶级" : "所有高级"}工具</span>
+                  <span>{membershipLevel === 2 ? t("dashboard.unlocked_top") : t("dashboard.unlocked_advanced")}</span>
                 </div>
               )}
               {!isPremium && (
@@ -193,8 +195,8 @@ export default function DashboardClient({ user }: { user: User }) {
       {/* Tools List */}
       <div className="space-y-6 pt-4">
         <div className="text-center md:text-left">
-          <h2 className="text-2xl font-bold mb-2">专属工具下载</h2>
-          <p className="text-gray-400">选择工具点击下载，您的会员有效期信息将自动同步至工具中</p>
+          <h2 className="text-2xl font-bold mb-2">{t("dashboard.tools_title")}</h2>
+          <p className="text-gray-400">{t("dashboard.tools_sync")}</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {tools.map((tool) => {
@@ -222,7 +224,7 @@ export default function DashboardClient({ user }: { user: User }) {
                   }`}
                 >
                   <Download size={16} className="mr-2" />
-                  {isToolPremium ? t("dashboard.download_btn") : `需要 ${tool.level === 2 ? 'ULTRA' : 'PRO'} 会员`}
+                  {isToolPremium ? t("dashboard.download_btn") : fillTemplate(t("dashboard.need_level"), { level: tool.level === 2 ? "ULTRA" : "PRO" })}
                 </Button>
               </div>
             );

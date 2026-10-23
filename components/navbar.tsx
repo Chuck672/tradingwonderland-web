@@ -81,7 +81,7 @@ export function Navbar() {
                     onClick={() => signOut({ callbackUrl: '/' })}
                     className="border-white/10 text-gray-400 hover:bg-white/10 hover:text-white"
                   >
-                    退出
+                    {t("nav.logout")}
                   </Button>
                 </>
               ) : (
@@ -153,7 +153,7 @@ export function Navbar() {
                     onClick={() => { setIsMobileMenuOpen(false); signOut({ callbackUrl: '/' }); }}
                     className="w-full border-white/10 text-gray-400 hover:bg-white/10 hover:text-white"
                   >
-                    退出
+                    {t("nav.logout")}
                   </Button>
                 </>
               ) : (

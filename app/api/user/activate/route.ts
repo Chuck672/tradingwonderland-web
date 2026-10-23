@@ -9,19 +9,19 @@ import { isAllowedOrigin } from "@/lib/security";
 export async function POST(req: NextRequest) {
   try {
     if (!isAllowedOrigin(req)) {
-      return NextResponse.json({ success: false, message: "非法请求来源" }, { status: 403 });
+      return NextResponse.json({ success: false, code: "origin", message: "origin" }, { status: 403 });
     }
 
     const session = await getServerSession(authOptions);
     if (!session?.user?.id || !session.user.email) {
-      return NextResponse.json({ success: false, message: "请先登录" }, { status: 401 });
+      return NextResponse.json({ success: false, code: "login", message: "login" }, { status: 401 });
     }
 
     const body = await req.json();
     let { code } = body;
 
     if (!code || typeof code !== "string") {
-      return NextResponse.json({ success: false, message: "请输入有效的激活码" }, { status: 400 });
+      return NextResponse.json({ success: false, code: "invalid", message: "invalid" }, { status: 400 });
     }
 
     // Format the code
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     // Basic regex validation (allow PRO-, ULTRA-, or TWL- prefix)
     if (!/^(PRO|ULTRA|TWL)-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(code)) {
-      return NextResponse.json({ success: false, message: "激活码格式不正确" }, { status: 400 });
+      return NextResponse.json({ success: false, code: "format", message: "format" }, { status: 400 });
     }
 
     const userId = session.user.id;
@@ -45,11 +45,11 @@ export async function POST(req: NextRequest) {
         .for("update");
 
       if (!activationCode) {
-        throw new Error("激活码不存在");
+        throw Object.assign(new Error("missing"), { code: "missing" });
       }
 
       if (activationCode.isUsed) {
-        throw new Error("该激活码已被使用");
+        throw Object.assign(new Error("used"), { code: "used" });
       }
 
       // 2. Fetch current user data to determine new vipUntil
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
         .for("update");
 
       if (!currentUser) {
-        throw new Error("用户信息异常");
+        throw Object.assign(new Error("user"), { code: "user" });
       }
 
       // 3. Calculate new expiration date
@@ -108,16 +108,15 @@ export async function POST(req: NextRequest) {
     // Transaction committed successfully
     return NextResponse.json({
       success: true,
-      message: `激活成功！您已成为 ${result.level === 2 ? 'ULTRA' : 'PRO'} 会员，有效期至 ${result.vipUntil}`,
+      code: "ok",
+      message: "ok",
       data: result,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API_ACTIVATE_CDKEY]", error);
-    // Determine if it's our controlled error or a system crash
-    const errMsg = error.message || "服务器异常，请稍后再试";
-    const status = ["激活码不存在", "该激活码已被使用", "用户信息异常"].includes(errMsg) ? 400 : 500;
-    
-    return NextResponse.json({ success: false, message: errMsg }, { status });
+    const code = error && typeof error === "object" && "code" in error && typeof error.code === "string" ? error.code : "server";
+    const status = code === "missing" || code === "used" || code === "user" ? 400 : 500;
+    return NextResponse.json({ success: false, code, message: code }, { status });
   }
 }

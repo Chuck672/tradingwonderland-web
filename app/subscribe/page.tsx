@@ -3,8 +3,8 @@ import { PurchasePlans } from "./purchase-plans";
 import { resolvePublicPlans } from "@/lib/pricing";
 
 export const metadata: Metadata = {
-  title: "购买 PiTradingAgent",
-  description: "PiTradingAgent Setup 8.0.0，MT5 图表伴侣桌面程序。海外买家可通过 Stripe 一次性购买，交付安装 zip 与 PTA1 授权。",
+  title: "Buy PiTradingAgent",
+  description: "PiTradingAgent Setup 8.0.0 is an MT5 chart-companion desktop app. Overseas buyers can purchase it once through Stripe. Delivery is the setup zip and a PTA1 license.",
 };
 
 export const dynamic = "force-dynamic";

@@ -13,7 +13,7 @@ export async function registerUser(formData: FormData) {
   const password = formData.get("password") as string;
 
   if (!email || !password) {
-    return { error: "邮箱和密码不能为空" };
+    return { error: "empty" };
   }
 
   try {
@@ -22,7 +22,7 @@ export async function registerUser(formData: FormData) {
     });
 
     if (existingUser) {
-      return { error: "该邮箱已被注册" };
+      return { error: "email_taken" };
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -41,7 +41,7 @@ export async function registerUser(formData: FormData) {
   } catch (error: any) {
     console.error("Registration error:", error);
     // Return detailed error message for debugging
-    return { error: `注册失败: ${error.message || "请稍后重试"}` };
+    return { error: "register_fail" };
   }
 }
 
@@ -49,7 +49,7 @@ export async function resetPassword(formData: FormData) {
   const email = formData.get("email") as string;
 
   if (!email) {
-    return { error: "邮箱不能为空" };
+    return { error: "empty" };
   }
 
   try {
@@ -60,7 +60,7 @@ export async function resetPassword(formData: FormData) {
     if (!user) {
       // Return success anyway to prevent email enumeration, or return error if preferred.
       // The user requested "Email not registered" error message, so we return error.
-      return { error: "该邮箱未注册" };
+      return { error: "not_found" };
     }
 
     // Generate a temporary 8-character password
@@ -74,35 +74,37 @@ export async function resetPassword(formData: FormData) {
 
     // Send email
     const html = `
-      <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto;">
-        <h2>Trading WonderLand - 密码重置 / Password Reset</h2>
-        <p>您好 / Hello,</p>
-        <p>您的账号 (${email}) 已生成临时密码。请使用以下密码登录，并在登录后尽快修改您的密码。</p>
-        <p>A temporary password has been generated for your account. Please log in with the following password and change it immediately.</p>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>QuantLogicLab — Temporary password</h2>
+        <p>Hello,</p>
+        <p>A temporary password was created for ${email}. Sign in with it, then change the password.</p>
         <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 2px; margin: 20px 0;">
           ${tempPassword}
         </div>
-        <p>如果您没有请求重置密码，请忽略此邮件。</p>
-        <p>If you did not request a password reset, please ignore this email.</p>
-        <br/>
-        <p>Trading WonderLand Team</p>
+        <p>If you did not request a password reset, you can ignore this email.</p>
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 24px 0;" />
+        <h2>QuantLogicLab — 临时密码</h2>
+        <p>您好，</p>
+        <p>已为 ${email} 生成临时密码。请用它登录，然后尽快修改密码。</p>
+        <p>如果这不是您本人的请求，可以忽略这封邮件。</p>
+        <p>QuantLogicLab</p>
       </div>
     `;
 
     const emailResult = await sendEmail({
       to: email,
-      subject: "Trading WonderLand - 临时密码 / Temporary Password",
+      subject: "QuantLogicLab temporary password / 临时密码",
       html,
     });
 
     if (emailResult.error) {
-      return { error: "邮件发送失败，请检查服务器配置" };
+      return { error: "email_fail" };
     }
 
     return { success: true };
   } catch (error) {
     console.error("Reset password error:", error);
-    return { error: "重置密码失败，请稍后重试" };
+    return { error: "reset_fail" };
   }
 }
 
@@ -110,18 +112,18 @@ export async function changePassword(formData: FormData) {
   const session = await getAuthSession();
   
   if (!session?.user?.email) {
-    return { error: "未登录或会话已过期" };
+    return { error: "unauthorized" };
   }
 
   const currentPassword = formData.get("currentPassword") as string;
   const newPassword = formData.get("newPassword") as string;
 
   if (!currentPassword || !newPassword) {
-    return { error: "密码不能为空" };
+    return { error: "password_empty" };
   }
 
   if (newPassword.length < 6) {
-    return { error: "新密码长度至少为6位" };
+    return { error: "password_short" };
   }
 
   try {
@@ -130,13 +132,13 @@ export async function changePassword(formData: FormData) {
     });
 
     if (!user || !user.password) {
-      return { error: "用户不存在" };
+      return { error: "user_missing" };
     }
 
     const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
 
     if (!isPasswordValid) {
-      return { error: "当前密码错误" };
+      return { error: "password_wrong" };
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -148,6 +150,6 @@ export async function changePassword(formData: FormData) {
     return { success: true };
   } catch (error) {
     console.error("Change password error:", error);
-    return { error: "修改密码失败，请稍后重试" };
+    return { error: "password_fail" };
   }
 }

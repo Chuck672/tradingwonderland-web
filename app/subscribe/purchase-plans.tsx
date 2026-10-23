@@ -8,58 +8,14 @@ import { Button } from "@/components/ui/button";
 import type { PublicPlan } from "@/lib/pricing";
 import { isAllowedStripeHttpsUrl } from "@/lib/stripe-url";
 
-const COPY = {
-  zh: {
-    title: "PiTradingAgent Setup 8.0.0",
-    subtitle: "MT5 图表伴侣桌面程序。一次性购买，交付安装包（zip）与 PTA1 授权。",
-    sameDelivery: "两档交付相同：安装 zip + PTA1。$349 为推荐档。",
-    overseas: "Stripe 结账仅面向中国大陆以外的买家。",
-    bullets: ["MT5 图表伴侣桌面程序（Setup 8.0.0）", "交付：安装 zip + PTA1 授权", "售后仅限安装与授权答疑"],
-    standard: "标准档",
-    recommended: "推荐 ★",
-    once: "一次性",
-    buy: "海外信用卡购买",
-    buying: "正在前往 Stripe…",
-    unconfigured: "海外支付暂未配置",
-    unconfiguredHint: "价格已标出。Stripe 环境变量配置完成后，此按钮会进入结账。",
-    error: "暂时无法打开结账，请稍后再试。",
-    redeem: "已有激活码？登录后可在个人中心兑换。",
-    disclaimer: "本页面所述程序仅供图表查看与研究，不构成投资建议。不提供代客操盘，也不承诺收益。",
-    footnote: "中国大陆用户请走闲鱼",
-  },
-  en: {
-    title: "PiTradingAgent Setup 8.0.0",
-    subtitle: "MT5 chart-companion desktop app. One-time purchase. Delivery is the setup zip and a PTA1 license.",
-    sameDelivery: "Both tiers deliver the same zip and PTA1 license. $349 is the recommended tier.",
-    overseas: "Stripe checkout is for buyers outside mainland China.",
-    bullets: [
-      "MT5 chart-companion desktop app (Setup 8.0.0)",
-      "Delivery: setup zip + PTA1 license",
-      "Support is limited to install and license questions",
-    ],
-    standard: "Standard",
-    recommended: "Recommended ★",
-    once: "one-time",
-    buy: "Buy with card (overseas)",
-    buying: "Opening Stripe…",
-    unconfigured: "Overseas checkout is not configured",
-    unconfiguredHint: "Prices are shown. This button opens checkout after the Stripe environment variables are set.",
-    error: "Checkout could not be opened. Please try again later.",
-    redeem: "Already have a license code? Sign in and redeem it in the dashboard.",
-    disclaimer:
-      "This desktop app is for chart review and research. It is not investment advice, not a discretionary trading service, and it does not promise profits.",
-    footnote: "中国大陆用户请走闲鱼",
-  },
-} as const;
-
 export function PurchasePlans({ plans }: { plans: PublicPlan[] }) {
-  const { language } = useLanguage();
-  const copy = language === "en" ? COPY.en : COPY.zh;
+  const { t } = useLanguage();
   const [pending, setPending] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  const bullets = [t("buy.bullet1"), t("buy.bullet2"), t("buy.bullet3")];
 
   async function startCheckout(planId: PublicPlan["id"]) {
-    setError(null);
+    setFailed(false);
     setPending(planId);
     try {
       const response = await fetch("/api/stripe/checkout", {
@@ -69,13 +25,13 @@ export function PurchasePlans({ plans }: { plans: PublicPlan[] }) {
       });
       const data = (await response.json().catch(() => null)) as { url?: string } | null;
       if (!response.ok || !data?.url || !isAllowedStripeHttpsUrl(data.url)) {
-        setError(copy.error);
+        setFailed(true);
         setPending(null);
         return;
       }
       window.location.assign(data.url);
     } catch {
-      setError(copy.error);
+      setFailed(true);
       setPending(null);
     }
   }
@@ -83,10 +39,10 @@ export function PurchasePlans({ plans }: { plans: PublicPlan[] }) {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-slate-50 selection:bg-[#00ff88]/30 pt-32 pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto text-center mb-12 space-y-4">
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white">{copy.title}</h1>
-        <p className="text-lg text-gray-400">{copy.subtitle}</p>
-        <p className="text-sm text-gray-500">{copy.sameDelivery}</p>
-        <p className="text-sm text-gray-500">{copy.overseas}</p>
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white">{t("buy.title")}</h1>
+        <p className="text-lg text-gray-400">{t("buy.subtitle")}</p>
+        <p className="text-sm text-gray-500">{t("buy.same")}</p>
+        <p className="text-sm text-gray-500">{t("buy.overseas")}</p>
       </div>
 
       <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
@@ -105,17 +61,17 @@ export function PurchasePlans({ plans }: { plans: PublicPlan[] }) {
             >
               {highlighted ? (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#00ff88] rounded-full text-black text-xs font-bold tracking-wider whitespace-nowrap">
-                  {copy.recommended}
+                  {t("buy.recommended")}
                 </div>
               ) : null}
-              <h2 className="text-xl font-bold text-white mb-2">{highlighted ? (language === "en" ? "Recommended tier" : "推荐档") : copy.standard}</h2>
+              <h2 className="text-xl font-bold text-white mb-2">{highlighted ? t("buy.tier_recommended") : t("buy.standard")}</h2>
               <p className="text-sm text-gray-400 mb-4">PiTradingAgent Setup 8.0.0</p>
               <div className="flex items-baseline gap-2 mb-6">
                 <span className="text-4xl font-extrabold text-white">{`$${plan.amountUsd}`}</span>
-                <span className="text-gray-500">{copy.once}</span>
+                <span className="text-gray-500">{t("buy.once")}</span>
               </div>
               <ul className="space-y-3 mb-8 flex-1">
-                {copy.bullets.map((item) => (
+                {bullets.map((item) => (
                   <li key={item} className="flex items-start gap-3 text-sm text-gray-300">
                     <Check className={`w-4 h-4 shrink-0 mt-0.5 ${highlighted ? "text-[#00ff88]" : "text-gray-500"}`} />
                     <span>{item}</span>
@@ -125,14 +81,14 @@ export function PurchasePlans({ plans }: { plans: PublicPlan[] }) {
               {unconfigured ? (
                 <div className="space-y-2">
                   <Button disabled className="w-full h-12 rounded-xl bg-[#1a1a1a] text-gray-400 border border-white/10">
-                    {copy.unconfigured}
+                    {t("buy.unconfigured")}
                   </Button>
-                  <p className="text-xs text-gray-500 leading-relaxed">{copy.unconfiguredHint}</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">{t("buy.unconfigured_hint")}</p>
                 </div>
               ) : link ? (
                 <a href={link} rel="noopener noreferrer">
                   <Button className={`w-full h-12 rounded-xl ${highlighted ? "bg-[#00ff88] text-black hover:bg-[#00cc6a]" : "bg-[#1a1a1a] text-white border border-white/10 hover:bg-[#00ff88] hover:text-black"}`}>
-                    {copy.buy} <ArrowRight className="w-4 h-4 ml-2" />
+                    {t("buy.cta")} <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </a>
               ) : (
@@ -141,7 +97,7 @@ export function PurchasePlans({ plans }: { plans: PublicPlan[] }) {
                   onClick={() => startCheckout(plan.id)}
                   className={`w-full h-12 rounded-xl ${highlighted ? "bg-[#00ff88] text-black hover:bg-[#00cc6a]" : "bg-[#1a1a1a] text-white border border-white/10 hover:bg-[#00ff88] hover:text-black"}`}
                 >
-                  {pending === plan.id ? copy.buying : copy.buy} <ArrowRight className="w-4 h-4 ml-2" />
+                  {pending === plan.id ? t("buy.opening") : t("buy.cta")} <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               )}
             </div>
@@ -149,19 +105,19 @@ export function PurchasePlans({ plans }: { plans: PublicPlan[] }) {
         })}
       </div>
 
-      {error ? (
+      {failed ? (
         <p className="max-w-4xl mx-auto mt-6 text-center text-sm text-red-400" role="alert">
-          {error}
+          {t("buy.error")}
         </p>
       ) : null}
 
-      <p className="max-w-4xl mx-auto mt-10 text-center text-xs text-slate-500">{copy.footnote}</p>
+      <p className="max-w-4xl mx-auto mt-10 text-center text-xs text-slate-500">{t("buy.footnote")}</p>
 
       <div className="max-w-3xl mx-auto mt-8 text-center space-y-3">
         <Link href="/login" className="text-sm text-gray-400 hover:text-[#00ff88]">
-          {copy.redeem}
+          {t("buy.redeem")}
         </Link>
-        <p className="text-xs text-slate-500 leading-relaxed border-t border-slate-800/50 pt-6">{copy.disclaimer}</p>
+        <p className="text-xs text-slate-500 leading-relaxed border-t border-slate-800/50 pt-6">{t("buy.disclaimer")}</p>
       </div>
     </div>
   );
