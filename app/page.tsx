@@ -4,15 +4,20 @@ import { useLanguage } from "@/components/language-provider";
 import { motion } from "motion/react";
 import dynamic from "next/dynamic";
 
+function ChartFallback() {
+  const { t } = useLanguage();
+  return (
+    <div className="w-full h-[60vh] min-h-[400px] rounded-xl border border-white/10 bg-black flex items-center justify-center text-[#00bfa5]">
+      {t("chart.loading")}
+    </div>
+  );
+}
+
 const TradingChart = dynamic(
   () => import("@/components/chart").then((m) => m.TradingChart),
   {
     ssr: false,
-    loading: () => (
-      <div className="w-full h-[60vh] min-h-[400px] rounded-xl border border-white/10 bg-black flex items-center justify-center text-[#00bfa5]">
-        Loading chart...
-      </div>
-    ),
+    loading: () => <ChartFallback />,
   }
 );
 

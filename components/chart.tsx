@@ -4,9 +4,11 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { createChart, ColorType, CandlestickSeries, CrosshairMode, IChartApi, ISeriesApi, LogicalRange } from "lightweight-charts";
 import { Button } from "@/components/ui/button";
 import { ArrowRightToLine } from "lucide-react";
+import { useLanguage } from "./language-provider";
 import { BubbleSeries, BubbleData } from "./bubble-series";
 
 export function TradingChart() {
+  const { t } = useLanguage();
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [timeframe, setTimeframe] = useState("H1");
   const [data, setData] = useState<any[]>([]);
@@ -216,7 +218,7 @@ export function TradingChart() {
 
       {loading && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="text-[#00bfa5] animate-pulse">Loading data...</div>
+          <div className="text-[#00bfa5] animate-pulse">{t("chart.loading")}</div>
         </div>
       )}
 
@@ -227,7 +229,7 @@ export function TradingChart() {
       <button
         onClick={scrollToLatest}
         className="absolute bottom-6 right-16 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white backdrop-blur-md transition-all border border-white/10"
-        title="Scroll to latest"
+        title={t("chart.scroll")}
       >
         <ArrowRightToLine size={20} />
       </button>
