@@ -681,7 +681,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   const t = (key: string) => {
-    return translations[language][key as keyof typeof translations["zh"]] || key;
+    const value = (translations[language] as Record<string, string>)[key];
+    if (value) return value;
+    if (process.env.NODE_ENV !== "production") {
+      throw new Error(`Missing ${language} translation for ${key}`);
+    }
+    return key;
   };
 
   return (
