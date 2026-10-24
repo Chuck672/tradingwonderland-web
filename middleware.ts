@@ -1,32 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import { canonicalRedirectTarget } from "@/lib/canonical-host";
 
 export function middleware(req: NextRequest) {
-  const host = req.headers.get("host") || "";
-  const proto = req.headers.get("x-forwarded-proto");
-
-  const isQuantLogicLab =
-    host === "quantlogiclab.com" ||
-    host === "www.quantlogiclab.com" ||
-    host.endsWith(".quantlogiclab.com");
-
-  if (!isQuantLogicLab) return NextResponse.next();
-
-  const nextUrl = new URL(req.url);
-  let changed = false;
-
-  if (host === "www.quantlogiclab.com") {
-    nextUrl.hostname = "quantlogiclab.com";
-    changed = true;
+  if (req.nextUrl.pathname === "/api/stripe/webhook") {
+    return NextResponse.next();
   }
 
-  if (proto === "http" || nextUrl.protocol === "http:") {
-    nextUrl.protocol = "https:";
-    changed = true;
-  }
+  const forwardedHost = req.headers.get("x-forwarded-host");
+  const hostHeader = forwardedHost?.split(",")[0]?.trim() || req.headers.get("host") || "";
+  const target = canonicalRedirectTarget({
+    hostHeader,
+    requestProtocol: req.nextUrl.protocol,
+    pathname: req.nextUrl.pathname,
+    search: req.nextUrl.search,
+  });
 
-  if (!changed) return NextResponse.next();
-
-  return NextResponse.redirect(nextUrl, 308);
+  if (!target) return NextResponse.next();
+  return NextResponse.redirect(target, 308);
 }
 
 export const config = {

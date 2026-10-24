@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     // 1. 鉴权：获取当前登录用户的 Session
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, message: "请先登录" }, { status: 401 });
+      return NextResponse.json({ success: false, code: "login", message: "login" }, { status: 401 });
     }
 
     // 2. 查库：获取用户最新状态，防止通过篡改本地 Session 越权
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
       .where(eq(users.id, session.user.id));
 
     if (!currentUser) {
-      return NextResponse.json({ success: false, message: "用户信息异常" }, { status: 400 });
+      return NextResponse.json({ success: false, code: "user", message: "user" }, { status: 400 });
     }
 
     // 3. 验证参数
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     const toolId = searchParams.get("toolId");
 
     if (!toolId || !TOOLS_CONFIG[toolId]) {
-      return NextResponse.json({ success: false, message: "无效的工具请求" }, { status: 400 });
+      return NextResponse.json({ success: false, code: "invalid", message: "invalid" }, { status: 400 });
     }
 
     const toolConfig = TOOLS_CONFIG[toolId];
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
     const isExpired = currentUser.vipUntil ? new Date(currentUser.vipUntil) < new Date() : true;
 
     if (userLevel < toolConfig.level || isExpired) {
-      return NextResponse.json({ success: false, message: "您的会员等级不足或已过期，请续费后下载" }, { status: 403 });
+      return NextResponse.json({ success: false, code: "forbidden", message: "forbidden" }, { status: 403 });
     }
 
     // 5. 读取私有文件
@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
         });
       }
 
-      return NextResponse.json({ success: false, message: "工具文件正在更新中，请稍后再试" }, { status: 404 });
+      return NextResponse.json({ success: false, code: "file", message: "file" }, { status: 404 });
     }
 
     const fileBuffer = await readFile(filePath);
@@ -109,6 +109,6 @@ export async function GET(req: NextRequest) {
 
   } catch (error: any) {
     console.error("[API_DOWNLOAD] Error:", error);
-    return NextResponse.json({ success: false, message: "服务器内部异常" }, { status: 500 });
+    return NextResponse.json({ success: false, code: "server", message: "server" }, { status: 500 });
   }
 }

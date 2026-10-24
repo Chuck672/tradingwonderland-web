@@ -15,13 +15,13 @@ export function Footer() {
             <h3 className="text-[#00ff88] font-bold text-lg mb-4">{t("footer.social")}</h3>
             <div className="flex flex-wrap gap-4">
               <a href="#" className="text-gray-400 hover:text-[#00ff88] transition-colors flex items-center gap-2 text-sm">
-                <span className="bg-white/10 px-2 py-1 rounded-md">小红书</span>
+                <span className="bg-white/10 px-2 py-1 rounded-md">{t("footer.xhs")}</span>
               </a>
               <a href="#" className="text-gray-400 hover:text-[#00ff88] transition-colors flex items-center gap-2 text-sm">
-                <span className="bg-white/10 px-2 py-1 rounded-md">抖音</span>
+                <span className="bg-white/10 px-2 py-1 rounded-md">{t("footer.douyin")}</span>
               </a>
               <a href="#" className="text-gray-400 hover:text-[#00ff88] transition-colors flex items-center gap-2 text-sm">
-                <span className="bg-white/10 px-2 py-1 rounded-md">快手</span>
+                <span className="bg-white/10 px-2 py-1 rounded-md">{t("footer.kuaishou")}</span>
               </a>
               <a href="#" className="text-gray-400 hover:text-[#00ff88] transition-colors flex items-center gap-2 text-sm">
                 <span className="bg-white/10 px-2 py-1 rounded-md">bilibili</span>
@@ -51,7 +51,7 @@ export function Footer() {
               </a>
               <a href="/contact" className="text-gray-400 hover:text-[#00ff88] transition-colors flex items-center gap-2 text-sm">
                 <MessageCircle className="w-5 h-5" />
-                <span>企业微信</span>
+                <span>{t("footer.wecom")}</span>
               </a>
             </div>
           </div>

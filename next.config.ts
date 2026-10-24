@@ -63,12 +63,16 @@ const nextConfig: NextConfig = {
       },
     ];
 
-    return [
+    const rules = [
       {
         source: '/:path*',
         headers: securityHeaders,
       },
-      {
+    ];
+    // Dev chunk URLs do not change when the file changes. A year-long
+    // immutable cache keeps the old language dictionary in the preview browser.
+    if (isProd) {
+      rules.push({
         source: '/_next/static/:path*',
         headers: [
           {
@@ -76,7 +80,10 @@ const nextConfig: NextConfig = {
             value: 'public, max-age=31536000, immutable',
           },
         ],
-      },
+      });
+    }
+    return [
+      ...rules,
       {
         source: '/uploads/:path*',
         headers: [

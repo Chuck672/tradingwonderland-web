@@ -5,15 +5,17 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
 import Image from "next/image";
+import { useLanguage } from "@/components/language-provider";
 
 export default function ContactPage() {
+  const { t } = useLanguage();
   const [showWechat, setShowWechat] = useState(false);
 
   return (
     <div className="min-h-screen pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto bg-[#0a0a0a] relative">
       <Link href="/subscribe" className="inline-flex items-center text-gray-400 hover:text-[#00ff88] transition-colors mb-8">
         <ArrowLeft className="w-4 h-4 mr-2" />
-        返回订阅计划
+        {t("contact.back")}
       </Link>
 
       <motion.div
@@ -22,8 +24,8 @@ export default function ContactPage() {
         className="space-y-8"
       >
         <div className="text-center mb-12">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">联系社区助理</h1>
-          <p className="text-gray-400">选择您常用的联系方式，助理将为您提供详细的订阅指引</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{t("contact.title")}</h1>
+          <p className="text-gray-400">{t("contact.desc")}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
@@ -52,8 +54,8 @@ export default function ContactPage() {
               <MessageCircle className="w-6 h-6 text-[#00ff88]" />
             </div>
             <div>
-              <h3 className="text-white font-semibold text-lg">企业微信</h3>
-              <p className="text-sm text-gray-400 mt-1">点击查看二维码</p>
+              <h3 className="text-white font-semibold text-lg">{t("contact.wecom")}</h3>
+              <p className="text-sm text-gray-400 mt-1">{t("contact.wecom_hint")}</p>
             </div>
           </div>
         </div>
@@ -86,13 +88,13 @@ export default function ContactPage() {
               <div className="relative w-full aspect-[1/2]">
                 <Image 
                   src="/wechat.jpg" 
-                  alt="企业微信二维码" 
+                  alt={t("contact.wecom_alt")} 
                   fill 
                   className="object-contain rounded-xl"
                   priority
                 />
               </div>
-              <p className="text-center text-gray-400 text-sm mt-4 mb-2">扫描二维码添加助理企业微信</p>
+              <p className="text-center text-gray-400 text-sm mt-4 mb-2">{t("contact.wecom_scan")}</p>
             </motion.div>
           </motion.div>
         )}

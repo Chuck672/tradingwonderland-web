@@ -13,15 +13,15 @@ export default function PsychologyPage() {
   const articles = [
     {
       id: "why-95-percent-fail",
-      title: "为什么95%以上的交易者都失败了？",
-      desc: "从认知偏差到盈利之路。探讨人类大脑如何处理不确定性，以及为什么我们的本能往往在交易中成为最大的障碍。",
+      title: t("psych.a1.title"),
+      desc: t("psych.a1.desc"),
       date: "2023-10-15",
       readTime: "10 min read"
     },
     {
       id: "from-loser-to-winner",
-      title: "从输家到赢家的核心蜕变",
-      desc: "交易心态大师课。揭示顶尖交易者如何驯服大脑的原始本能，将不适感转化为持续盈利的燃料。",
+      title: t("psych.a2.title"),
+      desc: t("psych.a2.desc"),
       date: "2023-11-02",
       readTime: "12 min read"
     }
@@ -31,7 +31,7 @@ export default function PsychologyPage() {
     <div className="min-h-screen pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
       <Link href="/resources" className="inline-flex items-center text-gray-400 hover:text-[#00ff88] transition-colors mb-8">
         <ArrowLeft className="w-4 h-4 mr-2" />
-        {t("tools.detail.back")}
+        {t("resources.back")}
       </Link>
 
       <motion.div
@@ -70,7 +70,7 @@ export default function PsychologyPage() {
                 <CardFooter className="mt-auto pt-6">
                   <Link href={`/resources/psychology/${article.id}`} className="w-full">
                     <Button className="w-full bg-white/5 hover:bg-[#00ff88] text-white hover:text-black border border-white/10 hover:border-transparent transition-all">
-                      阅读全文
+                      {t("psych.read")}
                     </Button>
                   </Link>
                 </CardFooter>
