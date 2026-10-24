@@ -38,6 +38,9 @@ function referencedKeys(): string[] {
         keys.push(key);
       }
     }
+    for (const match of source.matchAll(/"(home\.[A-Za-z0-9_]+)"/g)) {
+      keys.push(match[1]);
+    }
   }
   return keys;
 }
