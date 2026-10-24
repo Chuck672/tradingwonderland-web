@@ -4,7 +4,7 @@ import { resolvePublicPlans } from "@/lib/pricing";
 
 export const metadata: Metadata = {
   title: "Buy PiTradingAgent",
-  description: "PiTradingAgent Setup 8.0.0 is an MT5 chart-companion desktop app. Overseas buyers can purchase it once through Stripe. Delivery is the setup zip and a PTA1 license.",
+  description: "$149 is the full MT5 indicators and EA collection. $349 is the full PiTradingAgent desktop tool. Overseas buyers pay once by card through Stripe.",
 };
 
 export const dynamic = "force-dynamic";

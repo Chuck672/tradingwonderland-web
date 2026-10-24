@@ -12,7 +12,8 @@ export function PurchasePlans({ plans }: { plans: PublicPlan[] }) {
   const { t } = useLanguage();
   const [pending, setPending] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
-  const bullets = [t("buy.bullet1"), t("buy.bullet2"), t("buy.bullet3")];
+  const bulletsFor = (recommended: boolean) =>
+    recommended ? [t("buy.bullet2"), t("buy.bullet3")] : [t("buy.bullet3")];
 
   async function startCheckout(planId: PublicPlan["id"]) {
     setFailed(false);
@@ -64,14 +65,13 @@ export function PurchasePlans({ plans }: { plans: PublicPlan[] }) {
                   {t("buy.recommended")}
                 </div>
               ) : null}
-              <h2 className="text-xl font-bold text-white mb-2">{highlighted ? t("buy.tier_recommended") : t("buy.standard")}</h2>
-              <p className="text-sm text-gray-400 mb-4">PiTradingAgent Setup 8.0.0</p>
+              <h2 className="text-xl font-bold text-white mb-6">{highlighted ? t("buy.tier_349") : t("buy.tier_149")}</h2>
               <div className="flex items-baseline gap-2 mb-6">
                 <span className="text-4xl font-extrabold text-white">{`$${plan.amountUsd}`}</span>
                 <span className="text-gray-500">{t("buy.once")}</span>
               </div>
               <ul className="space-y-3 mb-8 flex-1">
-                {bullets.map((item) => (
+                {bulletsFor(highlighted).map((item) => (
                   <li key={item} className="flex items-start gap-3 text-sm text-gray-300">
                     <Check className={`w-4 h-4 shrink-0 mt-0.5 ${highlighted ? "text-[#00ff88]" : "text-gray-500"}`} />
                     <span>{item}</span>

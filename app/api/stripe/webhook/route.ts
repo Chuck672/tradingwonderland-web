@@ -8,7 +8,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const seenEvents = new Set<string>();
-const PRODUCT_NAME = "PiTradingAgent Setup 8.0.0";
 
 function remember(eventId: string) {
   seenEvents.add(eventId);
@@ -18,24 +17,35 @@ function remember(eventId: string) {
   }
 }
 
+function tierName(planId: string) {
+  return planId === "349" ? "full PiTradingAgent desktop tool" : "full MT5 indicators & EA collection";
+}
+
 function buyerText(input: { planId: string; amount: string; sessionId: string }) {
-  return [
-    `We received your payment for ${PRODUCT_NAME} (USD ${input.planId}).`,
+  const lines = [
+    `We received your payment for the ${tierName(input.planId)} (USD ${input.planId}).`,
     `Amount: ${input.amount}`,
     `Reference: ${input.sessionId}`,
-    "Delivery is the setup zip and your PTA1 license. Both will be sent to this email address.",
-    "Support covers install and license questions only.",
-    "PiTradingAgent is an MT5 chart-companion desktop app. It is not a discretionary trading service and it does not promise profits.",
-  ].join("\n");
+  ];
+  if (input.planId === "349") {
+    lines.push("Delivery is the setup zip and your PTA1 license. Both will be sent to this email address.");
+  } else {
+    lines.push("What you bought will be sent to this email address.");
+  }
+  lines.push("Support covers install and license questions only.");
+  lines.push("This is not a discretionary trading service and it does not promise profits.");
+  return lines.join("\n");
 }
 
 function adminText(input: { planId: string; amount: string; email: string; sessionId: string }) {
   return [
-    `Fulfill ${PRODUCT_NAME} (USD ${input.planId}).`,
+    `Fulfill the ${tierName(input.planId)} (USD ${input.planId}).`,
     `Amount: ${input.amount}`,
     `Buyer email: ${input.email || "(none on the Checkout session)"}`,
     `Checkout session: ${input.sessionId}`,
-    "Send the setup zip and a PTA1 license to the buyer.",
+    input.planId === "349"
+      ? "Send the setup zip and a PTA1 license to the buyer."
+      : "Send the MT5 indicators and EA collection to the buyer.",
   ].join("\n");
 }
 
@@ -83,7 +93,14 @@ export async function POST(req: Request) {
 
   const email = session.customer_details?.email || session.customer_email || "";
   const amount = typeof session.amount_total === "number" ? `${(session.amount_total / 100).toFixed(2)} ${session.currency || "usd"}` : planId;
-  const record = { planId, amount, email, sessionId: session.id, product: PRODUCT_NAME, fulfillment: "zip+PTA1" };
+  const record = {
+    planId,
+    amount,
+    email,
+    sessionId: session.id,
+    product: tierName(planId),
+    fulfillment: planId === "349" ? "zip+PTA1" : "indicators-ea",
+  };
 
   const smtpReady = Boolean(process.env.SMTP_USER?.trim() && process.env.SMTP_PASS?.trim());
   if (!smtpReady) {
@@ -101,7 +118,7 @@ export async function POST(req: Request) {
     sends.push(
       sendEmail({
         to: admin,
-        subject: `[QuantLogicLab] Fulfill ${PRODUCT_NAME} USD ${planId}`,
+        subject: `[QuantLogicLab] Fulfill USD ${planId}`,
         html: asHtml(adminText({ planId, amount, email, sessionId: session.id })),
       })
     );
@@ -110,7 +127,7 @@ export async function POST(req: Request) {
     sends.push(
       sendEmail({
         to: email,
-        subject: `${PRODUCT_NAME} payment received`,
+        subject: `Payment received (USD ${planId})`,
         html: asHtml(buyerText({ planId, amount, sessionId: session.id })),
       })
     );

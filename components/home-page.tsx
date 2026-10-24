@@ -83,7 +83,7 @@ export function HomePage({ plans }: { plans: HomePlan[] }) {
               src="/product/hero-ai.png"
               alt={t("home.alt_hero")}
               width={3839}
-              height={2073}
+              height={1981}
               priority
             />
           </figure>
@@ -111,7 +111,7 @@ export function HomePage({ plans }: { plans: HomePlan[] }) {
             <Bullets items={[t("home.chart_b1"), t("home.chart_b2"), t("home.chart_b3"), t("home.chart_b4")]} />
           </div>
           <figure>
-            <Shot src="/product/chart-multitf.png" alt={t("home.alt_chart")} width={3839} height={2070} />
+            <Shot src="/product/chart-multitf.png" alt={t("home.alt_chart")} width={3839} height={1978} />
             <Caption>{t("home.chart_cap")}</Caption>
           </figure>
         </div>
@@ -122,11 +122,11 @@ export function HomePage({ plans }: { plans: HomePlan[] }) {
         <p className="text-gray-400 max-w-3xl leading-relaxed mb-8">{t("home.ind_body")}</p>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <figure>
-            <Shot src="/product/indicator-a.png" alt={t("home.alt_ind1")} width={3839} height={2073} />
+            <Shot src="/product/indicator-a.png" alt={t("home.alt_ind1")} width={3839} height={1981} />
             <Caption>{t("home.ind_cap1")}</Caption>
           </figure>
           <figure>
-            <Shot src="/product/trading-risk.png" alt={t("home.alt_ind2")} width={3837} height={2072} />
+            <Shot src="/product/trading-risk.png" alt={t("home.alt_ind2")} width={3837} height={1980} />
             <Caption>{t("home.ind_cap2")}</Caption>
           </figure>
         </div>
@@ -135,7 +135,7 @@ export function HomePage({ plans }: { plans: HomePlan[] }) {
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-white/10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
           <figure className="lg:order-2">
-            <Shot src="/product/ai-agent.png" alt={t("home.alt_ai")} width={3836} height={2068} />
+            <Shot src="/product/ai-agent.png" alt={t("home.alt_ai")} width={3836} height={1976} />
           </figure>
           <div className="lg:order-1">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">{t("home.ai_title")}</h2>
@@ -153,13 +153,13 @@ export function HomePage({ plans }: { plans: HomePlan[] }) {
             <p className="text-gray-400 leading-relaxed">{t("home.alert_body")}</p>
           </div>
           <figure>
-            <Shot src="/product/alerts.png" alt={t("home.alt_alert")} width={3837} height={2070} />
+            <Shot src="/product/alerts.png" alt={t("home.alt_alert")} width={3837} height={1978} />
             <Caption>{t("home.alert_cap")}</Caption>
           </figure>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
           <figure className="lg:order-2">
-            <Shot src="/product/indicator-b.png" alt={t("home.alt_risk")} width={3837} height={2070} />
+            <Shot src="/product/indicator-b.png" alt={t("home.alt_risk")} width={3837} height={1978} />
             <Caption>{t("home.risk_cap")}</Caption>
           </figure>
           <div className="lg:order-1">
@@ -199,10 +199,9 @@ export function HomePage({ plans }: { plans: HomePlan[] }) {
                   {t("buy.recommended")}
                 </div>
               ) : null}
-              <h3 className="text-xl font-bold text-white mb-2">
-                {plan.recommended ? t("buy.tier_recommended") : t("buy.standard")}
+              <h3 className="text-xl font-bold text-white mb-6">
+                {plan.recommended ? t("buy.tier_349") : t("buy.tier_149")}
               </h3>
-              <p className="text-sm text-gray-400 mb-4">{t("home.kicker")}</p>
               <div className="flex items-baseline gap-2 mb-8">
                 <span className="text-4xl font-extrabold text-white">{`$${plan.amountUsd}`}</span>
                 <span className="text-gray-500">{t("buy.once")}</span>

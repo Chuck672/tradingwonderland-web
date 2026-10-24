@@ -18,7 +18,7 @@ View your app in AI Studio: https://ai.studio/apps/d20ead71-3ace-4086-bf9a-6b6b5
 
 ## Overseas Stripe checkout (PiTradingAgent)
 
-The buy page (`/subscribe`) sells **PiTradingAgent Setup 8.0.0**, an MT5 chart-companion desktop app. There are two one-time USD tiers: **$149** and **$349** (recommended). Both deliver the setup zip and a PTA1 license.
+The buy page (`/subscribe`) has two one-time USD tiers. **$149** is the full MT5 indicators & EA collection. **$349** (recommended) is the full PiTradingAgent desktop tool. The desktop tier is delivered as the setup zip and a PTA1 license.
 
 Stripe is for buyers outside mainland China. The page keeps a small footnote for mainland buyers and does not use that as the buy button.
 

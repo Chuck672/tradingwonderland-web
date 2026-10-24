@@ -5,7 +5,7 @@ const SESSION_ID = /^cs_[A-Za-z0-9_]+$/;
 
 export const metadata: Metadata = {
   title: "Payment received",
-  description: "PiTradingAgent Setup 8.0.0 payment received. The setup zip and PTA1 license are sent by email.",
+  description: "Payment received. What you bought is sent by email.",
 };
 
 export default async function SubscribeSuccessPage({

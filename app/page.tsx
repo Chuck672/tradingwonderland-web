@@ -4,10 +4,10 @@ import { resolvePublicPlans } from "@/lib/pricing";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "PiTradingAgent — MT5 chart companion | QuantLogicLab",
+    absolute: "PiTradingAgent — AI-Native Chart for MT5 | QuantLogicLab",
   },
   description:
-    "PiTradingAgent Setup 8.0.0 is a Windows desktop chart companion for MetaTrader 5. It adds a multi-chart workspace, studies, alerts, and an AI agent that reads the open chart. It does not replace MT5, and it does not promise results.",
+    "PiTradingAgent Setup 8.0.0 is an AI-Native Chart for MT5. It is a Windows desktop companion with a multi-chart workspace, studies, alerts, and an AI agent that reads the open chart. It does not replace MT5, and it does not promise results.",
 };
 
 export default function Page() {

@@ -9,7 +9,9 @@ import { isCheckoutOriginAllowed } from "@/lib/checkout-origin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const PRODUCT_NAME = "PiTradingAgent Setup 8.0.0";
+function tierName(planId: "149" | "349") {
+  return planId === "349" ? "full PiTradingAgent desktop tool" : "full MT5 indicators & EA collection";
+}
 
 export async function POST(req: NextRequest) {
   const forwardedHost = req.headers.get("x-forwarded-host");
@@ -70,8 +72,8 @@ export async function POST(req: NextRequest) {
         cancel_url: `${site}/subscribe/cancel`,
         metadata: {
           planId: plan.id,
-          product: PRODUCT_NAME,
-          fulfillment: "zip+PTA1",
+          product: tierName(plan.id),
+          fulfillment: plan.id === "349" ? "zip+PTA1" : "indicators-ea",
           userId,
         },
       });
