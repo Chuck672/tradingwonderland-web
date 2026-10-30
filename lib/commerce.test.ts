@@ -90,8 +90,9 @@ test("checkout session is preferred over a payment link", () => {
   const plans = resolvePublicPlans(env);
   assert.equal(plans[0]?.method, "checkout");
   assert.equal(plans[1]?.method, "payment_link");
-  assert.equal(plans[1]?.paymentLinkUrl, "https://buy.stripe.com/test_349");
+  assert.equal("paymentLinkUrl" in (plans[1] ?? {}), false);
   assert.equal("priceId" in (plans[0] ?? {}), false);
+  assert.equal(resolveServerPlan("349", env)?.paymentLinkUrl, "https://buy.stripe.com/test_349");
 });
 
 test("checkout accepts the production origin and rejects other sites", () => {

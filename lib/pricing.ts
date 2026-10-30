@@ -23,7 +23,6 @@ export type PublicPlan = {
   amountUsd: number;
   recommended: boolean;
   method: CheckoutMethod;
-  paymentLinkUrl?: string;
 };
 
 const PRICE_ID = /^price_[A-Za-z0-9]+$/;
@@ -71,7 +70,6 @@ export function resolvePublicPlans(env: NodeJS.ProcessEnv = process.env): Public
         amountUsd: plan.amountUsd,
         recommended: plan.recommended,
         method: "payment_link" as const,
-        paymentLinkUrl,
       };
     }
     return {

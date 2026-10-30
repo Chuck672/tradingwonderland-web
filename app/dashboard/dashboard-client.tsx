@@ -10,10 +10,21 @@ import { changePassword } from "@/app/actions/auth";
 import { Download, Edit2, Crown, CheckCircle2, AlertCircle, KeyRound } from "lucide-react";
 import Link from "next/link";
 import ActivationRedeem from "./components/activation-redeem";
+import { RefreshSession } from "@/components/refresh-session";
+import { canDownloadDesktop } from "@/lib/license";
 
 type User = InferSelectModel<typeof users>;
+type LicenseCode = { code: string; planId: string | null; membershipLevel: number };
 
-export default function DashboardClient({ user }: { user: User }) {
+export default function DashboardClient({
+  user,
+  licenses,
+  downloadNotice,
+}: {
+  user: User;
+  licenses: LicenseCode[];
+  downloadNotice: "unconfigured" | "forbidden" | null;
+}) {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -124,8 +135,11 @@ export default function DashboardClient({ user }: { user: User }) {
     { id: "microOrderFlow", name: t("tools.t6.title"), desc: t("tools.t6.desc"), level: 1 },
   ];
 
+  const desktopReady = canDownloadDesktop(membershipLevel, user.vipUntil);
+
   return (
     <div className="container mx-auto px-4 py-10 max-w-5xl space-y-10">
+      <RefreshSession />
       {/* Header */}
       <div className="flex flex-col md:flex-row items-center justify-between text-center md:text-left gap-4">
         <div>
@@ -178,13 +192,54 @@ export default function DashboardClient({ user }: { user: User }) {
                 </div>
               )}
               {!isPremium && (
-                <Link href="/subscribe" className="w-full md:w-auto">
+                <Link href="/subscribe?plan=349" className="w-full md:w-auto">
                   <Button className="w-full md:w-auto bg-[#00ff88] text-black hover:bg-[#00cc6a] px-8">
                     {t("dashboard.upgrade_btn")}
                   </Button>
                 </Link>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* License codes issued or redeemed for this account */}
+        <Card className="border-white/10 bg-[#0a0a0a]">
+          <CardHeader>
+            <CardTitle>{t("dashboard.license_title")}</CardTitle>
+            <CardDescription>{t("dashboard.license_body")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {downloadNotice === "unconfigured" ? (
+              <p className="text-sm text-amber-300" role="alert">{t("dashboard.download_notice_unconfigured")}</p>
+            ) : null}
+            {downloadNotice === "forbidden" ? (
+              <p className="text-sm text-amber-300" role="alert">{t("dashboard.download_notice_forbidden")}</p>
+            ) : null}
+            {licenses.length === 0 ? (
+              <p className="text-sm text-gray-400">{t("dashboard.license_empty")}</p>
+            ) : (
+              <ul className="space-y-3">
+                {licenses.map((license) => (
+                  <li key={license.code} className="rounded-xl border border-white/10 bg-black/40 px-4 py-3">
+                    <p className="font-mono text-white tracking-wide break-all">{license.code}</p>
+                    <p className="text-xs text-gray-500 mt-2">{t("dashboard.license_applied")}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {desktopReady ? (
+              <div className="space-y-2">
+                <Button asChild className="bg-[#00ff88] text-black hover:bg-[#00cc6a]">
+                  <a href="/api/download/pitradingagent">
+                    <Download size={16} className="mr-2" />
+                    {t("dashboard.download_agent")}
+                  </a>
+                </Button>
+                <p className="text-xs text-gray-500">{t("dashboard.download_agent_hint")}</p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">{t("dashboard.download_agent_locked")}</p>
+            )}
           </CardContent>
         </Card>
 

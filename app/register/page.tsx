@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { registerUser } from "@/app/actions/auth";
+import { safeCallbackPath } from "@/lib/return-path";
 
 export default function RegisterPage() {
   const { t } = useLanguage();
@@ -22,8 +23,9 @@ export default function RegisterPage() {
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError(null);
+    const callbackUrl = safeCallbackPath(new URLSearchParams(window.location.search).get("callbackUrl"));
     try {
-      await signIn("google", { callbackUrl: "/dashboard" });
+      await signIn("google", { callbackUrl });
     } catch (err: any) {
       console.error("Google login error:", err);
       setError(t("login.err.google_fail"));
@@ -58,9 +60,11 @@ export default function RegisterPage() {
         });
 
         if (loginResult?.error) {
-          router.push("/login");
+          const callbackUrl = safeCallbackPath(new URLSearchParams(window.location.search).get("callbackUrl"));
+          router.push(callbackUrl === "/dashboard" ? "/login" : `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
         } else {
-          router.push("/dashboard");
+          const callbackUrl = safeCallbackPath(new URLSearchParams(window.location.search).get("callbackUrl"));
+          router.push(callbackUrl);
           router.refresh();
         }
       }
@@ -129,7 +133,16 @@ export default function RegisterPage() {
 
           <div className="mt-4 text-center text-sm text-gray-400">
             {t("login.have_account")}{" "}
-            <Link href="/login" className="text-[#00ff88] hover:underline">
+            <Link
+              href="/login"
+              className="text-[#00ff88] hover:underline"
+              onClick={(event) => {
+                const callbackUrl = safeCallbackPath(new URLSearchParams(window.location.search).get("callbackUrl"));
+                if (callbackUrl === "/dashboard") return;
+                event.preventDefault();
+                window.location.assign(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+              }}
+            >
               {t("login.signin")}
             </Link>
           </div>
