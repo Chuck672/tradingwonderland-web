@@ -5,6 +5,8 @@ import { getStripe } from "@/lib/stripe";
 import { isPlanId, resolveServerPlan } from "@/lib/pricing";
 import { getPublicSiteUrl } from "@/lib/site-url";
 import { isCheckoutOriginAllowed } from "@/lib/checkout-origin";
+import { withPaymentLinkIdentity } from "@/lib/download-target";
+import { loginPathForPlan } from "@/lib/return-path";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,6 +40,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "unknown_plan" }, { status: 400 });
   }
 
+  let email = "";
+  let userId = "";
+  try {
+    const session = await getServerSession(authOptions);
+    if (session?.user?.email) email = session.user.email;
+    if (session?.user?.id) userId = session.user.id;
+  } catch (error) {
+    console.error("[STRIPE_CHECKOUT] session", error instanceof Error ? error.message : "unknown");
+  }
+
+  if (!email || !userId) {
+    return NextResponse.json({ error: "login", loginUrl: loginPathForPlan(planId) }, { status: 401 });
+  }
+
   const plan = resolveServerPlan(planId);
   if (!plan) {
     return NextResponse.json({ error: "unknown_plan" }, { status: 400 });
@@ -49,24 +65,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "unconfigured" }, { status: 503 });
     }
 
-    let email: string | undefined;
-    let userId = "";
-    try {
-      const session = await getServerSession(authOptions);
-      if (session?.user?.email) email = session.user.email;
-      if (session?.user?.id) userId = session.user.id;
-    } catch (error) {
-      console.error("[STRIPE_CHECKOUT] session lookup skipped", error instanceof Error ? error.message : "unknown");
-    }
-
     const site = getPublicSiteUrl();
     try {
       const checkoutSession = await stripe.checkout.sessions.create({
         mode: "payment",
         payment_method_types: ["card"],
         customer_creation: "always",
-        ...(email ? { customer_email: email } : {}),
-        ...(userId ? { client_reference_id: userId } : {}),
+        customer_email: email,
+        client_reference_id: userId,
         line_items: [{ price: plan.priceId, quantity: 1 }],
         success_url: `${site}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${site}/subscribe/cancel`,
@@ -89,7 +95,9 @@ export async function POST(req: NextRequest) {
   }
 
   if (plan.paymentLinkUrl) {
-    return NextResponse.json({ url: plan.paymentLinkUrl });
+    const url = withPaymentLinkIdentity(plan.paymentLinkUrl, userId, email);
+    if (!url) return NextResponse.json({ error: "unconfigured" }, { status: 503 });
+    return NextResponse.json({ url });
   }
 
   return NextResponse.json({ error: "unconfigured" }, { status: 503 });

@@ -25,6 +25,7 @@ export default function Page() {
   });
 
   const plans = resolvePublicPlans().map((plan) => ({
+    id: plan.id,
     amountUsd: plan.amountUsd,
     recommended: plan.recommended,
   }));

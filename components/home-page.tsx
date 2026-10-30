@@ -1,18 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { ArrowRight } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { ProductCarousel } from "@/components/product-carousel";
 import { Button } from "@/components/ui/button";
+import type { PlanId } from "@/lib/pricing";
+import { loginPathForPlan } from "@/lib/return-path";
 
 type HomePlan = {
+  id: PlanId;
   amountUsd: number;
   recommended: boolean;
 };
 
 export function HomePage({ plans }: { plans: HomePlan[] }) {
   const { t } = useLanguage();
+  const { status } = useSession();
+  const buyHref = (planId: PlanId) => (status === "authenticated" ? `/subscribe?plan=${planId}` : loginPathForPlan(planId));
 
   return (
     <div className="bg-[#0a0a0a] text-slate-50">
@@ -24,7 +30,7 @@ export function HomePage({ plans }: { plans: HomePlan[] }) {
         <p className="max-w-3xl text-base text-gray-400 leading-relaxed mb-6">{t("home.hero_sub")}</p>
         <div className="flex flex-col sm:flex-row gap-3">
           <Button asChild size="lg">
-            <Link href="/subscribe">
+            <Link href={buyHref("349")}>
               {t("home.cta")} <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           </Button>
@@ -89,7 +95,7 @@ export function HomePage({ plans }: { plans: HomePlan[] }) {
                 <span className="text-gray-500">{t("buy.once")}</span>
               </div>
               <Button asChild className="w-full h-12 rounded-xl mt-auto">
-                <Link href="/subscribe">
+                <Link href={buyHref(plan.id)}>
                   {t("home.price_cta")} <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>

@@ -53,7 +53,41 @@ Optional:
 - `ORDER_NOTIFY_EMAIL` plus the existing `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` (order email). Without SMTP, a paid webhook is logged as `[STRIPE_FULFILLMENT_PENDING]` and still acknowledged.
 - `NEXT_PUBLIC_SITE_URL` (`https://quantlogiclab.com`, no port)
 
-After a paid Checkout, send the buyer the setup zip and a PTA1 license. The site does not store card numbers.
+Buying requires a signed-in account (email or Google). Guests are sent to `/login?callbackUrl=/subscribe?plan=149` or `plan=349`, and after login the site opens Stripe Checkout. The Checkout Session stores `metadata.userId`, `metadata.planId`, and `client_reference_id`.
+
+`checkout.session.completed` on `/api/stripe/webhook` writes the plan before any email:
+
+| planId | `user.membershipLevel` | Dashboard label | What they can download |
+| --- | --- | --- | --- |
+| 149 | 1 | PRO | MT5 indicators and EAs already listed on the dashboard |
+| 349 | 2 | ULTRA | Those tools, plus the PiTradingAgent installer |
+
+The license lasts one year from the order (`vipUntil`). A higher existing level is kept. A later existing expiry is kept. The same Checkout Session cannot extend the year twice.
+
+The webhook also inserts an `activation_codes` row (`PRO-…` or `ULTRA-…`), binds it to the user and the Checkout Session, and shows it on the dashboard and the success page. The buyer does not redeem that code again. Hand-issued codes still use `/api/user/activate`.
+
+Run `drizzle/0003_activation_order.sql` once on the Hostinger MySQL database before the new webhook is deployed. Until those columns exist, the webhook returns 500 so Stripe retries.
+
+The installer is not in this repo. `Download PiTradingAgent` calls `GET /api/download/pitradingagent`, which checks the signed-in ULTRA account and then:
+
+1. `GITHUB_TOKEN` + `GITHUB_RELEASE_ASSET_URL` (GitHub API asset URL). The server asks GitHub for a short-lived file URL and redirects the browser there. The buyer does not see the repository page. The token stays on the server.
+2. Otherwise `PITRADINGAGENT_DOWNLOAD_URL`, an `https://` object-storage URL. `github.com` pages are rejected.
+3. Otherwise a file named `private-tools/PiTradingAgent-Setup.zip` on the server (same private folder as the `.ex5` tools).
+
+Optional `PITRADINGAGENT_DOWNLOAD_FILENAME` sets the downloaded filename (default `PiTradingAgent-Setup.zip`).
+
+The site does not store card numbers.
+
+### Hostinger environment variables for the installer
+
+Add these next to the Stripe keys, then redeploy. Do not commit the values.
+
+- `GITHUB_TOKEN` — token that can read the private release asset (`contents: read` is enough)
+- `GITHUB_RELEASE_ASSET_URL` — `https://api.github.com/repos/OWNER/REPO/releases/assets/ASSET_ID`
+- `PITRADINGAGENT_DOWNLOAD_URL` — used only when the GitHub pair above is unset
+- `PITRADINGAGENT_DOWNLOAD_FILENAME` — optional download name
+
+Database (already required for login): `DATABASE_URL`. Apply `drizzle/0003_activation_order.sql` in phpMyAdmin.
 
 ## www.quantlogiclab.com
 

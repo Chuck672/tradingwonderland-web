@@ -20,14 +20,16 @@ export default function ActivationRedeem() {
     // 自动转大写并去除非字母数字
     let val = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "");
     
-    // 如果用户粘贴的是不带横杠的连续字符，尝试自动加横杠 (TWL-XXXX-XXXX-XXXX)
+    // Paste without dashes: PRO / ULTRA / TWL plus 12 characters.
     if (!val.includes("-") && val.length > 3) {
-      if (val.startsWith("TWL")) {
-        val = "TWL-" + val.slice(3).match(/.{1,4}/g)?.join("-") || val;
+      const prefix = (["ULTRA", "PRO", "TWL"] as const).find((item) => val.startsWith(item));
+      if (prefix) {
+        const rest = val.slice(prefix.length);
+        val = `${prefix}-${rest.match(/.{1,4}/g)?.join("-") || rest}`;
       }
     }
-    
-    setCode(val.slice(0, 19)); // 最大长度限制 (TWL-1234-5678-ABCD = 19 chars)
+
+    setCode(val.slice(0, 22));
     setError("");
     setSuccess("");
   };
@@ -97,7 +99,7 @@ export default function ActivationRedeem() {
               value={code}
               onChange={handleChange}
               disabled={isLoading}
-              placeholder="TWL-XXXX-XXXX-XXXX"
+              placeholder={t("redeem.placeholder")}
               className={`w-full bg-slate-950 border ${
                 error ? "border-rose-500/50 focus:border-rose-500" : "border-slate-700 focus:border-[#00bfa5]"
               } rounded-lg px-4 py-3.5 text-white font-mono tracking-wider focus:outline-none transition-colors disabled:opacity-50`}

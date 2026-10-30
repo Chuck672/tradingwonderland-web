@@ -88,6 +88,12 @@ export const activationCodes = mysqlTable("activation_codes", {
   usedByEmail: varchar("usedByEmail", { length: 255 }),
   usedById: varchar("usedById", { length: 255 }).references(() => users.id, { onDelete: "set null" }),
   usedAt: datetime("usedAt"),
+  /** Purchaser, set when Stripe fulfillment binds the code. Manual redeems may only set usedById. */
+  ownerUserId: varchar("ownerUserId", { length: 255 }).references(() => users.id, { onDelete: "set null" }),
+  /** Checkout Session id. Unique so a webhook retry cannot mint a second code or extend membership again. */
+  stripeSessionId: varchar("stripeSessionId", { length: 255 }).unique(),
+  /** "149" or "349" when the code was issued by Stripe. Null for hand-issued codes. */
+  planId: varchar("planId", { length: 8 }),
   createdAt: datetime("createdAt").default(sql`CURRENT_TIMESTAMP`),
 });
 
@@ -105,6 +111,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   bbsLikes: many(bbsLikes),
   bbsBookmarks: many(bbsBookmarks),
   usedActivationCodes: many(activationCodes, { relationName: "usedActivationCodes" }),
+  ownedActivationCodes: many(activationCodes, { relationName: "ownedActivationCodes" }),
 }));
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -126,6 +133,11 @@ export const activationCodesRelations = relations(activationCodes, ({ one }) => 
     fields: [activationCodes.usedById],
     references: [users.id],
     relationName: "usedActivationCodes",
+  }),
+  owner: one(users, {
+    fields: [activationCodes.ownerUserId],
+    references: [users.id],
+    relationName: "ownedActivationCodes",
   }),
 }));
 

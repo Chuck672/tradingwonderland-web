@@ -7,6 +7,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
+import { safeCallbackPath } from "@/lib/return-path";
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +23,9 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError(null);
+    const callbackUrl = safeCallbackPath(new URLSearchParams(window.location.search).get("callbackUrl"));
     try {
-      await signIn("google", { callbackUrl: "/dashboard" });
+      await signIn("google", { callbackUrl });
     } catch (err: any) {
       console.error("Google login error:", err);
       setError(t("login.err.google_fail"));
@@ -48,7 +50,8 @@ export default function LoginPage() {
         setError(t("login.err.login_fail"));
         setLoading(false);
       } else {
-        router.push("/dashboard");
+        const callbackUrl = safeCallbackPath(new URLSearchParams(window.location.search).get("callbackUrl"));
+        router.push(callbackUrl);
         router.refresh();
       }
     } catch (err: any) {
@@ -111,8 +114,17 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-4 text-center text-sm text-gray-400">
-            Don't have an account?{" "}
-            <Link href="/register" className="text-[#00ff88] hover:underline">
+            {t("login.no_account")}{" "}
+            <Link
+              href="/register"
+              className="text-[#00ff88] hover:underline"
+              onClick={(event) => {
+                const callbackUrl = safeCallbackPath(new URLSearchParams(window.location.search).get("callbackUrl"));
+                if (callbackUrl === "/dashboard") return;
+                event.preventDefault();
+                window.location.assign(`/register?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+              }}
+            >
               {t("login.register")}
             </Link>
           </div>

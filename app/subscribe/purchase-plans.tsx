@@ -1,21 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Check, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import type { PublicPlan } from "@/lib/pricing";
+import { isPlanId } from "@/lib/pricing";
 import { isAllowedStripeHttpsUrl } from "@/lib/stripe-url";
+import { loginPathForPlan } from "@/lib/return-path";
 
 export function PurchasePlans({ plans }: { plans: PublicPlan[] }) {
   const { t } = useLanguage();
+  const { status } = useSession();
   const [pending, setPending] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  const started = useRef(false);
   const bulletsFor = (recommended: boolean) =>
     recommended ? [t("buy.bullet2"), t("buy.bullet3")] : [t("buy.bullet3")];
 
   async function startCheckout(planId: PublicPlan["id"]) {
+    if (status !== "authenticated") {
+      window.location.assign(loginPathForPlan(planId));
+      return;
+    }
+    const plan = plans.find((item) => item.id === planId);
+    if (!plan || plan.method === "unconfigured") {
+      setFailed(true);
+      return;
+    }
     setFailed(false);
     setPending(planId);
     try {
@@ -24,7 +38,11 @@ export function PurchasePlans({ plans }: { plans: PublicPlan[] }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ planId }),
       });
-      const data = (await response.json().catch(() => null)) as { url?: string } | null;
+      const data = (await response.json().catch(() => null)) as { url?: string; error?: string } | null;
+      if (response.status === 401 || data?.error === "login") {
+        window.location.assign(loginPathForPlan(planId));
+        return;
+      }
       if (!response.ok || !data?.url || !isAllowedStripeHttpsUrl(data.url)) {
         setFailed(true);
         setPending(null);
@@ -37,6 +55,23 @@ export function PurchasePlans({ plans }: { plans: PublicPlan[] }) {
     }
   }
 
+  useEffect(() => {
+    if (status === "loading" || started.current) return;
+    const plan = new URLSearchParams(window.location.search).get("plan");
+    if (!isPlanId(plan)) return;
+    const selected = plans.find((item) => item.id === plan);
+    if (!selected || selected.method === "unconfigured") return;
+    if (status !== "authenticated") {
+      started.current = true;
+      window.location.replace(loginPathForPlan(plan));
+      return;
+    }
+    started.current = true;
+    void startCheckout(plan);
+    // startCheckout closes over the latest session status; this effect re-runs when status settles.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, plans]);
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-slate-50 selection:bg-[#00ff88]/30 pt-32 pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto text-center mb-12 space-y-4">
@@ -44,15 +79,13 @@ export function PurchasePlans({ plans }: { plans: PublicPlan[] }) {
         <p className="text-lg text-gray-400">{t("buy.subtitle")}</p>
         <p className="text-sm text-gray-500">{t("buy.same")}</p>
         <p className="text-sm text-gray-500">{t("buy.overseas")}</p>
+        {status !== "authenticated" ? <p className="text-sm text-gray-400">{t("buy.login_gate")}</p> : null}
       </div>
 
       <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
         {plans.map((plan) => {
           const highlighted = plan.recommended;
-          const link = plan.method === "payment_link" && plan.paymentLinkUrl && isAllowedStripeHttpsUrl(plan.paymentLinkUrl)
-            ? plan.paymentLinkUrl
-            : null;
-          const unconfigured = plan.method === "unconfigured" || (plan.method === "payment_link" && !link);
+          const unconfigured = plan.method === "unconfigured";
           return (
             <div
               key={plan.id}
@@ -85,12 +118,6 @@ export function PurchasePlans({ plans }: { plans: PublicPlan[] }) {
                   </Button>
                   <p className="text-xs text-gray-500 leading-relaxed">{t("buy.unconfigured_hint")}</p>
                 </div>
-              ) : link ? (
-                <a href={link} rel="noopener noreferrer">
-                  <Button className={`w-full h-12 rounded-xl ${highlighted ? "bg-[#00ff88] text-black hover:bg-[#00cc6a]" : "bg-[#1a1a1a] text-white border border-white/10 hover:bg-[#00ff88] hover:text-black"}`}>
-                    {t("buy.cta")} <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </a>
               ) : (
                 <Button
                   disabled={pending !== null}
@@ -114,7 +141,7 @@ export function PurchasePlans({ plans }: { plans: PublicPlan[] }) {
       <p className="max-w-4xl mx-auto mt-10 text-center text-xs text-slate-500">{t("buy.footnote")}</p>
 
       <div className="max-w-3xl mx-auto mt-8 text-center space-y-3">
-        <Link href="/login" className="text-sm text-gray-400 hover:text-[#00ff88]">
+        <Link href="/login?callbackUrl=%2Fdashboard" className="text-sm text-gray-400 hover:text-[#00ff88]">
           {t("buy.redeem")}
         </Link>
         <p className="text-xs text-slate-500 leading-relaxed border-t border-slate-800/50 pt-6">{t("buy.disclaimer")}</p>
