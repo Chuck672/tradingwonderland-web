@@ -72,11 +72,11 @@ The installer is not in this repo. `Download PiTradingAgent` calls `GET /api/dow
 
 1. `GITHUB_TOKEN` + `GITHUB_RELEASE_ASSET_URL` (GitHub API asset URL). The server asks GitHub for a short-lived file URL and redirects the browser there. The buyer does not see the repository page. The token stays on the server.
 2. Otherwise `PITRADINGAGENT_DOWNLOAD_URL`, an `https://` object-storage URL. `github.com` pages are rejected.
-3. Otherwise a file named `private-tools/PiTradingAgent-Setup.zip` on the server (same private folder as the `.ex5` tools).
+3. Otherwise a file named `private-tools/PiTradingAgent-Setup.zip` on the server.
 
 Optional `PITRADINGAGENT_DOWNLOAD_FILENAME` sets the downloaded filename (default `PiTradingAgent-Setup.zip`).
 
-Dashboard tool downloads call `GET /api/tools/download?toolId=...`. A blank `vipUntil` does not expire the membership; only a past date does. When `GITHUB_TOKEN` and `GITHUB_TOOLS_RELEASE_TAG` are both set, the server reads that GitHub release and downloads the asset whose name matches the tool file. `GITHUB_TOOLS_REPO` defaults to `Chuck672/PiTradingAgentV8`. Publish the tag you put in `GITHUB_TOOLS_RELEASE_TAG` (for example `mt5-ex5`) with these exact asset names:
+Dashboard tool downloads call `GET /api/tools/download?toolId=...`. A blank `vipUntil` does not expire the membership; only a past date does. When `GITHUB_TOKEN` and `GITHUB_TOOLS_RELEASE_TAG` are both set, the server reads that GitHub release and downloads the asset whose name matches the tool file. `GITHUB_TOOLS_REPO` is optional and defaults to `Chuck672/PiTradingAgentV8`. Publish the tag you put in `GITHUB_TOOLS_RELEASE_TAG` (for example `mt5-ex5`) with these exact asset names:
 
 - `SVP5_pro.ex5`
 - `inRangeVP.ex5`
@@ -85,7 +85,7 @@ Dashboard tool downloads call `GET /api/tools/download?toolId=...`. A blank `vip
 - `Trend_Panel9_pro.ex5`
 - `microOrderFlow.ex5`
 
-If the tag is unset, the asset is missing, or GitHub errors, the route uses `private-tools/<filename>.ex5` on the server. Those files stay in the repo as the fallback. The token stays on the server.
+The six MT5 `.ex5` tools are not committed in this repository. They are the release assets on [PiTradingAgentV8 tag `mt5-ex5`](https://github.com/Chuck672/PiTradingAgentV8/releases/tag/mt5-ex5). If the tag is unset, the asset is missing, or GitHub errors, the route looks for `private-tools/<filename>.ex5` on the server and serves that file only when it is present. The token stays on the server.
 
 The site does not store card numbers.
 

@@ -14,7 +14,6 @@ export default defineConfig([{
         "**/react-trading-journal-template-enhanced-v4/**",
         "**/tradingsystemv2p0/**",
         "**/volumeprofile_courses/**",
-        "**/private-tools/**",
         "**/drizzle/**",
     ],
     rules: {
