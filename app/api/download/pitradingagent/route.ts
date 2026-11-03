@@ -10,7 +10,7 @@ import { users } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { getPublicSiteUrl } from "@/lib/site-url";
 import { canDownloadDesktop } from "@/lib/license";
-import { isSignedReleaseHost, resolveRemoteDownload } from "@/lib/download-target";
+import { openGithubReleaseAsset, resolveRemoteDownload } from "@/lib/download-target";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,29 +65,19 @@ export async function GET() {
 
   if (remote?.kind === "github") {
     try {
-      const upstream = await fetch(remote.assetUrl, {
-        redirect: "manual",
-        headers: {
-          Authorization: `Bearer ${remote.token}`,
-          Accept: "application/octet-stream",
-          "User-Agent": "quantlogiclab-web",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-        signal: AbortSignal.timeout(20000),
-      });
-      if (upstream.status >= 300 && upstream.status < 400) {
-        const location = upstream.headers.get("location");
-        if (location && isSignedReleaseHost(location)) {
-          return NextResponse.redirect(location);
+      const opened = await openGithubReleaseAsset(remote.assetUrl, remote.token);
+      if (!opened.ok) {
+        if (opened.reason === "rejected-host") {
+          console.error("[DOWNLOAD_AGENT] signed url host rejected");
+        } else {
+          console.error("[DOWNLOAD_AGENT] github asset", opened.status);
         }
-        console.error("[DOWNLOAD_AGENT] signed url host rejected");
         return redirectTo("/dashboard?download=unconfigured");
       }
-      if (!upstream.ok || !upstream.body) {
-        console.error("[DOWNLOAD_AGENT] github asset", upstream.status);
-        return redirectTo("/dashboard?download=unconfigured");
+      if (opened.mode === "redirect") {
+        return NextResponse.redirect(opened.location);
       }
-      return new NextResponse(upstream.body, { headers: attachment(remote.filename) });
+      return new NextResponse(opened.body, { headers: attachment(remote.filename) });
     } catch (error) {
       console.error("[DOWNLOAD_AGENT] github", error instanceof Error ? error.message : "unknown");
       return redirectTo("/dashboard?download=unconfigured");

@@ -76,7 +76,16 @@ The installer is not in this repo. `Download PiTradingAgent` calls `GET /api/dow
 
 Optional `PITRADINGAGENT_DOWNLOAD_FILENAME` sets the downloaded filename (default `PiTradingAgent-Setup.zip`).
 
-The six MT5 `.ex5` tools are not committed in this repository. They are the release assets on [PiTradingAgentV8 tag `mt5-ex5`](https://github.com/Chuck672/PiTradingAgentV8/releases/tag/mt5-ex5). `GITHUB_TOOLS_RELEASE_TAG` selects that tag (`mt5-ex5`); `GITHUB_TOKEN` reads the private release. `GITHUB_TOOLS_REPO` is optional and defaults to `Chuck672/PiTradingAgentV8`. Asset names: `SVP5_pro.ex5`, `inRangeVP.ex5`, `scalpTradingPanel.ex5`, `strengthBubble_pro.ex5`, `Trend_Panel9_pro.ex5`, `microOrderFlow.ex5`.
+Dashboard tool downloads call `GET /api/tools/download?toolId=...`. A blank `vipUntil` does not expire the membership; only a past date does. When `GITHUB_TOKEN` and `GITHUB_TOOLS_RELEASE_TAG` are both set, the server reads that GitHub release and downloads the asset whose name matches the tool file. `GITHUB_TOOLS_REPO` is optional and defaults to `Chuck672/PiTradingAgentV8`. Publish the tag you put in `GITHUB_TOOLS_RELEASE_TAG` (for example `mt5-ex5`) with these exact asset names:
+
+- `SVP5_pro.ex5`
+- `inRangeVP.ex5`
+- `scalpTradingPanel.ex5`
+- `strengthBubble_pro.ex5`
+- `Trend_Panel9_pro.ex5`
+- `microOrderFlow.ex5`
+
+The six MT5 `.ex5` tools are not committed in this repository. They are the release assets on [PiTradingAgentV8 tag `mt5-ex5`](https://github.com/Chuck672/PiTradingAgentV8/releases/tag/mt5-ex5). If the tag is unset, the asset is missing, or GitHub errors, the route looks for `private-tools/<filename>.ex5` on the server and serves that file only when it is present. The token stays on the server.
 
 The site does not store card numbers.
 
@@ -84,10 +93,12 @@ The site does not store card numbers.
 
 Add these next to the Stripe keys, then redeploy. Do not commit the values.
 
-- `GITHUB_TOKEN` — token that can read the private release asset (`contents: read` is enough)
+- `GITHUB_TOKEN` — token that can read the private release asset (`contents: read` is enough). The MT5 tools reuse this same token.
 - `GITHUB_RELEASE_ASSET_URL` — `https://api.github.com/repos/OWNER/REPO/releases/assets/ASSET_ID`
 - `PITRADINGAGENT_DOWNLOAD_URL` — used only when the GitHub pair above is unset
 - `PITRADINGAGENT_DOWNLOAD_FILENAME` — optional download name
+- `GITHUB_TOOLS_RELEASE_TAG` — release tag that holds the `.ex5` assets (for example `mt5-ex5`). Required for the remote tool path.
+- `GITHUB_TOOLS_REPO` — optional `owner/repo`. Defaults to `Chuck672/PiTradingAgentV8`.
 
 Database (already required for login): `DATABASE_URL`. Apply `drizzle/0003_activation_order.sql` in phpMyAdmin.
 
