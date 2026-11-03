@@ -48,9 +48,27 @@ export function planIdFromCheckout(input: {
   return null;
 }
 
-export function canDownloadDesktop(level: number, vipUntil: Date | string | null, now = new Date()): boolean {
-  if (level < 2) return false;
+/**
+ * Membership is active when the level is high enough and the expiry is still in
+ * the future. Null, undefined, and "" mean there is no expiry limit. A concrete
+ * date that is not after `now` is expired, including the exact expiry instant.
+ */
+export function isMembershipActive(
+  level: number,
+  vipUntil: Date | string | null | undefined,
+  minLevel: number,
+  now = new Date(),
+): boolean {
+  if (level < minLevel) return false;
   if (!vipUntil) return true;
   const expiry = vipUntil instanceof Date ? vipUntil : new Date(vipUntil);
   return expiry.getTime() > now.getTime();
+}
+
+export function canDownloadDesktop(
+  level: number,
+  vipUntil: Date | string | null,
+  now = new Date(),
+): boolean {
+  return isMembershipActive(level, vipUntil, 2, now);
 }

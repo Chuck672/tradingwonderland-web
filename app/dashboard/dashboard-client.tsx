@@ -11,7 +11,7 @@ import { Download, Edit2, Crown, CheckCircle2, AlertCircle, KeyRound } from "luc
 import Link from "next/link";
 import ActivationRedeem from "./components/activation-redeem";
 import { RefreshSession } from "@/components/refresh-session";
-import { canDownloadDesktop } from "@/lib/license";
+import { canDownloadDesktop, isMembershipActive } from "@/lib/license";
 
 type User = InferSelectModel<typeof users>;
 type LicenseCode = { code: string; planId: string | null; membershipLevel: number };
@@ -38,11 +38,11 @@ export default function DashboardClient({
 
   // Restore original logic while handling Drizzle's nullable types
   const membershipLevel = user.membershipLevel ?? 0;
-  const isPremium = membershipLevel > 0 && (!user.vipUntil || new Date(user.vipUntil) > new Date());
+  const isPremium = isMembershipActive(membershipLevel, user.vipUntil, 1);
 
   const handleDownloadClick = async (toolId: string, toolLevel: number) => {
     // 再次双重检查权限
-    if (membershipLevel < toolLevel || (user.vipUntil && new Date(user.vipUntil) < new Date())) {
+    if (!isMembershipActive(membershipLevel, user.vipUntil, toolLevel)) {
       alert(fillTemplate(t("dashboard.alert_need_level"), { level: toolLevel === 2 ? "ULTRA" : "PRO" }));
       return;
     }
@@ -256,7 +256,7 @@ export default function DashboardClient({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {tools.map((tool) => {
             // Check if user has sufficient level to download this tool
-            const isToolPremium = membershipLevel >= tool.level && (!user.vipUntil || new Date(user.vipUntil) > new Date());
+            const isToolPremium = isMembershipActive(membershipLevel, user.vipUntil, tool.level);
             
             return (
               <div key={tool.id} className="p-5 rounded-xl border border-white/10 bg-black/40 flex flex-col justify-between hover:border-white/20 transition-colors relative overflow-hidden">

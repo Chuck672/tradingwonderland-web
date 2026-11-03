@@ -7,6 +7,11 @@ import { eq } from "drizzle-orm";
 import path from "path";
 import { readFile } from "fs/promises";
 import { existsSync } from "fs";
+import { isMembershipActive } from "@/lib/license";
+import { openGithubReleaseAsset, resolveRemoteToolDownload } from "@/lib/download-target";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // 核心配置文件：工具 ID 对应的真实文件名和权限等级
 const TOOLS_CONFIG: Record<string, { filename: string; level: number }> = {
@@ -17,6 +22,59 @@ const TOOLS_CONFIG: Record<string, { filename: string; level: number }> = {
   "Trend_Panel9_pro": { filename: "Trend_Panel9_pro.ex5", level: 1 },
   "microOrderFlow": { filename: "microOrderFlow.ex5", level: 1 },
 };
+
+function attachmentHeaders(filename: string, contentLength?: number | string | null): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/octet-stream",
+    "Content-Disposition": `attachment; filename="${filename.replace(/["\r\n]/g, "")}"`,
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+  };
+  if (typeof contentLength === "number") headers["Content-Length"] = String(contentLength);
+  else if (typeof contentLength === "string" && /^\d+$/.test(contentLength)) headers["Content-Length"] = contentLength;
+  return headers;
+}
+
+/** GitHub release first. Any miss or error returns null so the caller can use private-tools. */
+async function readRemoteTool(filename: string): Promise<NextResponse | null> {
+  try {
+    const remote = await resolveRemoteToolDownload(filename);
+    if (!remote) return null;
+    const opened = await openGithubReleaseAsset(remote.assetUrl, remote.token, { followSigned: true });
+    if (opened.ok && opened.mode === "body") {
+      return new NextResponse(opened.body, { headers: attachmentHeaders(filename, opened.contentLength) });
+    }
+    console.error("[API_DOWNLOAD] github asset fallback", opened.ok ? opened.mode : opened.reason, opened.ok ? "" : opened.status);
+    return null;
+  } catch (error) {
+    console.error("[API_DOWNLOAD] github", error instanceof Error ? error.message : "unknown");
+    return null;
+  }
+}
+
+function bufferStream(buffer: Buffer): ReadableStream<Uint8Array> {
+  const bytes = new Uint8Array(buffer.byteLength);
+  bytes.set(buffer);
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(bytes);
+      controller.close();
+    },
+  });
+}
+
+/** Same private-tools locations the desktop installer uses, in the same order. */
+async function readPrivateTool(filename: string): Promise<Buffer | null> {
+  if (!/^[A-Za-z0-9._-]+$/.test(filename)) return null;
+  const candidates = [
+    path.join(process.env.PWD || process.cwd(), "private-tools", filename),
+    path.join(process.cwd(), ".next", "standalone", "private-tools", filename),
+    path.join(process.cwd(), "..", "private-tools", filename),
+  ];
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return readFile(candidate);
+  }
+  return null;
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -49,65 +107,24 @@ export async function GET(req: NextRequest) {
 
     const toolConfig = TOOLS_CONFIG[toolId];
 
-    // 4. 权限校验 (双重防御)
-    const userLevel = currentUser.membershipLevel || 0;
-    const isExpired = currentUser.vipUntil ? new Date(currentUser.vipUntil) < new Date() : true;
-
-    if (userLevel < toolConfig.level || isExpired) {
+    // Null/empty vipUntil has no expiry. Only a concrete past date blocks the download.
+    if (!isMembershipActive(currentUser.membershipLevel || 0, currentUser.vipUntil, toolConfig.level)) {
       return NextResponse.json({ success: false, code: "forbidden", message: "forbidden" }, { status: 403 });
     }
 
-    // 5. 读取私有文件
-    // process.cwd() 在某些部署环境可能发生偏移，改用 __dirname 向上追溯，或者直接用 process.env.PWD 结合兜底
-    const basePath = process.env.PWD || process.cwd();
-    const filePath = path.join(basePath, "private-tools", toolConfig.filename);
+    const remoteFile = await readRemoteTool(toolConfig.filename);
+    if (remoteFile) return remoteFile;
 
-    if (!existsSync(filePath)) {
-      // Fallback 1: Try alternative path mapping just in case of Next.js server standalone output structure
-      const altPath = path.join(process.cwd(), ".next", "standalone", "private-tools", toolConfig.filename);
-      if (existsSync(altPath)) {
-        const altFileBuffer = await readFile(altPath);
-        return new NextResponse(altFileBuffer, {
-          headers: {
-            "Content-Type": "application/octet-stream",
-            "Content-Disposition": `attachment; filename="${toolConfig.filename}"`,
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Content-Length": altFileBuffer.length.toString(),
-          },
-        });
-      }
-
-      // Fallback 2: Check if process.cwd() is inside public_html or nodejs and search relative to it
-      // Hostinger often puts files one directory up or in specific web roots
-      const fallbackPath3 = path.join(process.cwd(), "..", "private-tools", toolConfig.filename);
-      if (existsSync(fallbackPath3)) {
-        const fallbackBuffer3 = await readFile(fallbackPath3);
-        return new NextResponse(fallbackBuffer3, {
-          headers: {
-            "Content-Type": "application/octet-stream",
-            "Content-Disposition": `attachment; filename="${toolConfig.filename}"`,
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Content-Length": fallbackBuffer3.length.toString(),
-          },
-        });
-      }
-
+    const localFile = await readPrivateTool(toolConfig.filename);
+    if (!localFile) {
       return NextResponse.json({ success: false, code: "file", message: "file" }, { status: 404 });
     }
 
-    const fileBuffer = await readFile(filePath);
-
-    // 6. 构造返回流，伪装成直接下载文件
-    return new NextResponse(fileBuffer, {
-      headers: {
-        "Content-Type": "application/octet-stream",
-        "Content-Disposition": `attachment; filename="${toolConfig.filename}"`,
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Content-Length": fileBuffer.length.toString(),
-      },
+    return new NextResponse(bufferStream(localFile), {
+      headers: attachmentHeaders(toolConfig.filename, localFile.length),
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("[API_DOWNLOAD] Error:", error);
     return NextResponse.json({ success: false, code: "server", message: "server" }, { status: 500 });
   }
