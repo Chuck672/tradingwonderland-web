@@ -72,9 +72,11 @@ The installer is not in this repo. `Download PiTradingAgent` calls `GET /api/dow
 
 1. `GITHUB_TOKEN` + `GITHUB_RELEASE_ASSET_URL` (GitHub API asset URL). The server asks GitHub for a short-lived file URL and redirects the browser there. The buyer does not see the repository page. The token stays on the server.
 2. Otherwise `PITRADINGAGENT_DOWNLOAD_URL`, an `https://` object-storage URL. `github.com` pages are rejected.
-3. Otherwise a file named `private-tools/PiTradingAgent-Setup.zip` on the server (same private folder as the `.ex5` tools).
+3. Otherwise a file named `private-tools/PiTradingAgent-Setup.zip` on the server.
 
 Optional `PITRADINGAGENT_DOWNLOAD_FILENAME` sets the downloaded filename (default `PiTradingAgent-Setup.zip`).
+
+The six MT5 `.ex5` tools are not committed in this repository. They are the release assets on [PiTradingAgentV8 tag `mt5-ex5`](https://github.com/Chuck672/PiTradingAgentV8/releases/tag/mt5-ex5). `GITHUB_TOOLS_RELEASE_TAG` selects that tag (`mt5-ex5`); `GITHUB_TOKEN` reads the private release. `GITHUB_TOOLS_REPO` is optional and defaults to `Chuck672/PiTradingAgentV8`. Asset names: `SVP5_pro.ex5`, `inRangeVP.ex5`, `scalpTradingPanel.ex5`, `strengthBubble_pro.ex5`, `Trend_Panel9_pro.ex5`, `microOrderFlow.ex5`.
 
 The site does not store card numbers.
 
