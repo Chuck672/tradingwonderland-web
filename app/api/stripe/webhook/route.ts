@@ -45,6 +45,7 @@ export async function POST(req: Request) {
       userId: session.metadata?.userId || session.client_reference_id,
       email: session.customer_details?.email || session.customer_email,
       currency: session.currency,
+      purchasedAt: typeof session.created === "number" ? new Date(session.created * 1000) : null,
     });
   } catch (error) {
     logLicenseSchemaError(error, "STRIPE_WEBHOOK");

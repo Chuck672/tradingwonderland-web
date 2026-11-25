@@ -77,6 +77,7 @@ export const verificationTokens = mysqlTable(
   })
 );
 
+/** Historical license codes. Stripe no longer inserts rows here. */
 export const activationCodes = mysqlTable("activation_codes", {
   id: varchar("id", { length: 255 })
     .primaryKey()
@@ -88,12 +89,28 @@ export const activationCodes = mysqlTable("activation_codes", {
   usedByEmail: varchar("usedByEmail", { length: 255 }),
   usedById: varchar("usedById", { length: 255 }).references(() => users.id, { onDelete: "set null" }),
   usedAt: datetime("usedAt"),
-  /** Purchaser, set when Stripe fulfillment binds the code. Manual redeems may only set usedById. */
+  /** Purchaser, set when an older Stripe fulfillment bound the code. */
   ownerUserId: varchar("ownerUserId", { length: 255 }).references(() => users.id, { onDelete: "set null" }),
-  /** Checkout Session id. Unique so a webhook retry cannot mint a second code or extend membership again. */
+  /** Checkout Session id. Unique so a webhook retry of an old code cannot extend membership again. */
   stripeSessionId: varchar("stripeSessionId", { length: 255 }).unique(),
   /** "149" or "349" when the code was issued by Stripe. Null for hand-issued codes. */
   planId: varchar("planId", { length: 8 }),
+  createdAt: datetime("createdAt").default(sql`CURRENT_TIMESTAMP`),
+});
+
+/** One row per new Stripe Checkout Session. No customer-facing license code. */
+export const checkoutFulfillments = mysqlTable("checkout_fulfillments", {
+  id: varchar("id", { length: 255 })
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  stripeSessionId: varchar("stripeSessionId", { length: 255 }).unique().notNull(),
+  planId: varchar("planId", { length: 8 }).notNull(),
+  membershipLevel: int("membershipLevel").notNull(),
+  durationDays: int("durationDays").notNull(),
+  email: varchar("email", { length: 255 }),
+  userId: varchar("userId", { length: 255 }).references(() => users.id, { onDelete: "set null" }),
+  purchasedAt: datetime("purchasedAt").notNull(),
+  appliedAt: datetime("appliedAt"),
   createdAt: datetime("createdAt").default(sql`CURRENT_TIMESTAMP`),
 });
 

@@ -8,12 +8,12 @@ import type { PlanId } from "@/lib/pricing";
 
 export function SuccessView({
   sessionId,
-  licenseCode,
   planId,
+  showDownload,
 }: {
   sessionId: string | null;
-  licenseCode: string | null;
   planId: PlanId | null;
+  showDownload: boolean;
 }) {
   const { t } = useLanguage();
 
@@ -22,13 +22,7 @@ export function SuccessView({
       <RefreshSession />
       <h1 className="text-4xl md:text-5xl font-bold text-[#00ff88] mb-4">{t("buy.success_title")}</h1>
       <p className="text-gray-300 text-lg max-w-xl mx-auto mb-4">{t("buy.success_body")}</p>
-      {licenseCode ? (
-        <div className="mb-6 max-w-xl w-full rounded-2xl border border-[#00ff88]/30 bg-[#111] px-5 py-4">
-          <p className="text-sm text-gray-400 mb-2">{t("buy.success_code_label")}</p>
-          <p className="font-mono text-lg text-white tracking-wide break-all">{licenseCode}</p>
-          <p className="text-xs text-gray-500 mt-3">{t("dashboard.license_applied")}</p>
-        </div>
-      ) : null}
+      <p className="text-gray-300 text-base max-w-xl mx-auto mb-4">{t("buy.success_login")}</p>
       {planId === "149" ? <p className="text-gray-400 text-sm max-w-xl mx-auto mb-4">{t("buy.success_indicators")}</p> : null}
       <p className="text-gray-500 text-sm max-w-xl mx-auto mb-8">{t("buy.success_note")}</p>
       {sessionId ? (
@@ -37,13 +31,13 @@ export function SuccessView({
         </p>
       ) : null}
       <div className="flex flex-wrap gap-4 justify-center">
-        {planId === "349" && licenseCode ? (
+        {showDownload ? (
           <Button asChild className="bg-[#00ff88] text-black hover:bg-[#00cc6a]">
             <a href="/api/download/pitradingagent">{t("buy.success_download")}</a>
           </Button>
         ) : null}
         <Link href="/dashboard">
-          <Button className={planId === "349" && licenseCode ? "bg-white/10 text-white hover:bg-white/20" : "bg-[#00ff88] text-black hover:bg-[#00cc6a]"}>
+          <Button className={showDownload ? "bg-white/10 text-white hover:bg-white/20" : "bg-[#00ff88] text-black hover:bg-[#00cc6a]"}>
             {t("buy.dashboard")}
           </Button>
         </Link>

@@ -10,7 +10,7 @@ const SESSION_ID = /^cs_[A-Za-z0-9_]+$/;
 
 export const metadata: Metadata = {
   title: "Payment received",
-  description: "Payment received. Your plan and license code are on the dashboard.",
+  description: "Payment received. Sign in to PiTradingAgent with your QuantLogicLab account.",
 };
 
 export const dynamic = "force-dynamic";
@@ -22,8 +22,8 @@ export default async function SubscribeSuccessPage({
 }) {
   const params = await searchParams;
   const sessionId = params.session_id && SESSION_ID.test(params.session_id) ? params.session_id : null;
-  let licenseCode: string | null = null;
   let planId: PlanId | null = null;
+  let showDownload = false;
 
   if (sessionId) {
     const stripe = getStripe();
@@ -40,6 +40,7 @@ export default async function SubscribeSuccessPage({
           userId: checkout.metadata?.userId || checkout.client_reference_id,
           email: checkout.customer_details?.email || checkout.customer_email,
           currency: checkout.currency,
+          purchasedAt: typeof checkout.created === "number" ? new Date(checkout.created * 1000) : null,
         });
         if (result.status !== "ignored" && isPlanId(result.planId)) {
           const sameUser = Boolean(auth?.user?.id && result.userId && auth.user.id === result.userId);
@@ -47,8 +48,8 @@ export default async function SubscribeSuccessPage({
             auth?.user?.email && result.email && auth.user.email.toLowerCase() === result.email.toLowerCase()
           );
           if (sameUser || sameEmail) {
-            licenseCode = result.code;
             planId = result.planId;
+            showDownload = result.planId === "349" && (result.status === "applied" || result.status === "duplicate");
           }
           if (result.status === "applied" || result.status === "pending_user") {
             await sendFulfillmentEmails({
@@ -64,5 +65,5 @@ export default async function SubscribeSuccessPage({
     }
   }
 
-  return <SuccessView sessionId={sessionId} licenseCode={licenseCode} planId={planId} />;
+  return <SuccessView sessionId={sessionId} planId={planId} showDownload={showDownload} />;
 }

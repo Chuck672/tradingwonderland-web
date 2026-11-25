@@ -9,20 +9,16 @@ import { useState } from "react";
 import { changePassword } from "@/app/actions/auth";
 import { Download, Edit2, Crown, CheckCircle2, AlertCircle, KeyRound } from "lucide-react";
 import Link from "next/link";
-import ActivationRedeem from "./components/activation-redeem";
 import { RefreshSession } from "@/components/refresh-session";
 import { canDownloadDesktop, isMembershipActive } from "@/lib/license";
 
 type User = InferSelectModel<typeof users>;
-type LicenseCode = { code: string; planId: string | null; membershipLevel: number };
 
 export default function DashboardClient({
   user,
-  licenses,
   downloadNotice,
 }: {
   user: User;
-  licenses: LicenseCode[];
   downloadNotice: "unconfigured" | "forbidden" | null;
 }) {
   const { t } = useLanguage();
@@ -202,7 +198,6 @@ export default function DashboardClient({
           </CardContent>
         </Card>
 
-        {/* License codes issued or redeemed for this account */}
         <Card className="border-white/10 bg-[#0a0a0a]">
           <CardHeader>
             <CardTitle>{t("dashboard.license_title")}</CardTitle>
@@ -215,18 +210,7 @@ export default function DashboardClient({
             {downloadNotice === "forbidden" ? (
               <p className="text-sm text-amber-300" role="alert">{t("dashboard.download_notice_forbidden")}</p>
             ) : null}
-            {licenses.length === 0 ? (
-              <p className="text-sm text-gray-400">{t("dashboard.license_empty")}</p>
-            ) : (
-              <ul className="space-y-3">
-                {licenses.map((license) => (
-                  <li key={license.code} className="rounded-xl border border-white/10 bg-black/40 px-4 py-3">
-                    <p className="font-mono text-white tracking-wide break-all">{license.code}</p>
-                    <p className="text-xs text-gray-500 mt-2">{t("dashboard.license_applied")}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <p className="text-sm text-gray-300">{user.email}</p>
             {desktopReady ? (
               <div className="space-y-2">
                 <Button asChild className="bg-[#00ff88] text-black hover:bg-[#00cc6a]">
@@ -242,9 +226,6 @@ export default function DashboardClient({
             )}
           </CardContent>
         </Card>
-
-        {/* Activation Redeem Card */}
-        <ActivationRedeem />
       </div>
 
       {/* Tools List */}

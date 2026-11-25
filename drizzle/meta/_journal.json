@@ -29,6 +29,13 @@
       "when": 1793318400000,
       "tag": "0003_activation_order",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1795564800000,
+      "tag": "0004_checkout_fulfillments",
+      "breakpoints": true
     }
   ]
 }

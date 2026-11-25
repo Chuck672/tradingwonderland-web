@@ -15,10 +15,11 @@ View your app in AI Studio: https://ai.studio/apps/d20ead71-3ace-4086-bf9a-6b6b5
 1. Install dependencies: `npm install`
 2. Copy `.env.example` to `.env.local` and fill in the values you need. Do not commit that file.
 3. Run the app: `npm run dev`
+4. Unit tests: `node --experimental-strip-types --test lib/*.test.ts`
 
 ## Overseas Stripe checkout (PiTradingAgent)
 
-The buy page (`/subscribe`) has two one-time USD tiers. **$149** is the full MT5 indicators & EA collection. **$349** (recommended) is the full PiTradingAgent desktop tool. The desktop tier is delivered as the setup zip and a PTA1 license.
+The buy page (`/subscribe`) has two one-time USD tiers. **$149** is the full MT5 indicators & EA collection. **$349** (recommended) is the full PiTradingAgent desktop tool. The desktop app signs in with the QuantLogicLab email and password. License codes are no longer issued.
 
 Stripe is for buyers outside mainland China. The page keeps a small footnote for mainland buyers and does not use that as the buy button.
 
@@ -27,7 +28,7 @@ Checkout prefers a Stripe Checkout Session. A Payment Link is used only when tha
 ### Create the two prices in Stripe Dashboard
 
 1. Open [Stripe Dashboard → Product catalog](https://dashboard.stripe.com/products) (test mode first, then live).
-2. Add a product named `PiTradingAgent Setup 8.0.0`. Description suggestion: `MT5 chart-companion desktop app. Delivery: setup zip and PTA1 license.`
+2. Add a product named `PiTradingAgent Setup 8.0.0`. Description suggestion: `MT5 chart-companion desktop app. Delivery: installer. Sign in with the QuantLogicLab account.`
 3. Add a one-time price of **USD 149**. Copy the Price ID (`price_...`) into `STRIPE_PRICE_149`.
 4. On the same product, add another one-time price of **USD 349**. Copy it into `STRIPE_PRICE_349`.
 5. Developers → API keys: put the secret key in `STRIPE_SECRET_KEY`. The publishable key is optional for this hosted Checkout flow.
@@ -62,11 +63,11 @@ Buying requires a signed-in account (email or Google). Guests are sent to `/logi
 | 149 | 1 | PRO | MT5 indicators and EAs already listed on the dashboard |
 | 349 | 2 | ULTRA | Those tools, plus the PiTradingAgent installer |
 
-The license lasts one year from the order (`vipUntil`). A higher existing level is kept. A later existing expiry is kept. The same Checkout Session cannot extend the year twice.
+The license lasts one year from the Stripe Checkout Session `created` time (`vipUntil`). A higher existing level is kept. A later existing expiry is kept. The same Checkout Session cannot extend the year twice, because the grant anchor is that original timestamp and a `checkout_fulfillments` row records the session.
 
-The webhook also inserts an `activation_codes` row (`PRO-…` or `ULTRA-…`), binds it to the user and the Checkout Session, and shows it on the dashboard and the success page. The buyer does not redeem that code again. Hand-issued codes still use `/api/user/activate`.
+Paid checkout upgrades `membershipLevel` and `vipUntil` only. It does not call a license-code generator and it does not insert new `activation_codes` rows. Buyer and admin email do not include a code. The dashboard does not list codes or offer a redeem box. `POST /api/user/activate` still checks `isAllowedOrigin` and then returns `410 retired`. The `activation_codes` table stays for history. A checkout that already has a historical row is finished from that row and is not copied into a second code.
 
-Run `drizzle/0003_activation_order.sql` once on the Hostinger MySQL database before the new webhook is deployed. Until those columns exist, the webhook returns 500 so Stripe retries.
+Run `drizzle/0004_checkout_fulfillments.sql` once on the Hostinger MySQL database before this webhook is deployed. Until `checkout_fulfillments` exists, a new paid session returns 500 so Stripe retries. `drizzle/0003_activation_order.sql` is still required for older rows that already have a Checkout Session id. Do not drop `activation_codes`.
 
 The installer is not in this repo. `Download PiTradingAgent` calls `GET /api/download/pitradingagent`, which checks the signed-in ULTRA account and then:
 
@@ -100,7 +101,29 @@ Add these next to the Stripe keys, then redeploy. Do not commit the values.
 - `GITHUB_TOOLS_RELEASE_TAG` — release tag that holds the `.ex5` assets (for example `mt5-ex5`). Required for the remote tool path.
 - `GITHUB_TOOLS_REPO` — optional `owner/repo`. Defaults to `Chuck672/PiTradingAgentV8`.
 
-Database (already required for login): `DATABASE_URL`. Apply `drizzle/0003_activation_order.sql` in phpMyAdmin.
+Database (already required for login): `DATABASE_URL`. Apply `drizzle/0004_checkout_fulfillments.sql` in phpMyAdmin before deploying the checkout change. Leave `activation_codes` in place.
+
+## Desktop member login (PiTradingAgent)
+
+PiTradingAgent's Electron main process signs in with the website email and password. This is not a browser session and it does not call `/api/auth/[...nextauth]`.
+
+`POST /api/desktop/login` accepts JSON `{ "email", "password" }`. The password check is the same user lookup and bcrypt compare as the website Credentials provider. On success the response is a Bearer JWT plus `email`, `membershipLevel`, and `vipUntil`.
+
+A paid member is `isMembershipActive(membershipLevel, vipUntil, 1)`: PRO or ULTRA, and the expiry is still in the future. **A null, missing, or blank `vipUntil` is non-expiring**, which is the same rule the download and dashboard helpers already use. The JSON field is `null` in that case. A level below 1 is `unpaid`. A past `vipUntil` is `membership_expired`. An account with no password hash (Google-only until a password is set) is `password_not_set`. A wrong email or password is `invalid_credentials`. Too many attempts is `429 rate_limited`.
+
+`GET /api/desktop/session` reads `Authorization: Bearer <token>`, checks the signature, and loads the user again. It returns the same membership fields when the membership is still active.
+
+The token is HS256, lasts one hour (`expiresAt`), and is signed with `DESKTOP_JWT_SECRET`. It is not signed with `NEXTAUTH_SECRET`. The route does not read or write NextAuth cookies. Requests that send an `Origin` header or browser `Sec-Fetch-*` headers are rejected, and the response does not set `Access-Control-Allow-Origin`. Use Node `fetch` in the Electron main process so those headers are absent. Chromium `net.fetch` often sends an `Origin` and is rejected on purpose.
+
+Sign-in attempts are limited per process: 8 per 15 minutes for an IP plus email, and 40 per 15 minutes for that IP. A restart clears the counters.
+
+### Hostinger environment variable
+
+Set this on the quantlogiclab.com Node site (hPanel → Websites → Environment variables) after merge, then redeploy when you choose to ship. This change does not deploy production.
+
+- `DESKTOP_JWT_SECRET` — required for `/api/desktop/login` and `/api/desktop/session`. A random string of at least 32 characters. It must be different from `NEXTAUTH_SECRET`. If it is missing, too short, or equal to `NEXTAUTH_SECRET`, those routes return `503` and the website login is unchanged. Do not commit a value.
+
+No other new secret is required. `DATABASE_URL` and `NEXTAUTH_SECRET` stay as they are. Apply `drizzle/0004_checkout_fulfillments.sql` in phpMyAdmin before the fulfillment code is deployed.
 
 ## www.quantlogiclab.com
 
