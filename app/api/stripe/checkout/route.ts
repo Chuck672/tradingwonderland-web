@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
         metadata: {
           planId: plan.id,
           product: tierName(plan.id),
-          fulfillment: plan.id === "349" ? "zip+PTA1" : "indicators-ea",
+          fulfillment: plan.id === "349" ? "desktop-account" : "indicators-ea",
           userId,
         },
       });

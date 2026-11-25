@@ -1,17 +1,15 @@
 import "server-only";
-import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "./db";
-import { activationCodes, users } from "./schema";
+import { activationCodes, checkoutFulfillments, users } from "./schema";
 import {
   STRIPE_LICENSE_DAYS,
   grantUntil,
-  isLicenseCode,
   nextMembershipLevel,
   nextVipUntil,
   planIdFromCheckout,
   planMembershipLevel,
 } from "./license";
-import { generateLicenseCode } from "./license-code";
 import { isPlanId, type PlanId } from "./pricing";
 
 export type FulfillInput = {
@@ -23,11 +21,16 @@ export type FulfillInput = {
   userId?: string | null;
   email?: string | null;
   currency?: string | null;
+  /**
+   * Stripe Checkout Session `created`. Webhook retries must pass the same instant
+   * so `nextVipUntil` does not stack another year. New checkouts are stored on
+   * `checkout_fulfillments`, not as a license code.
+   */
+  purchasedAt?: Date | null;
 };
 
 export type FulfillResult = {
   status: "applied" | "duplicate" | "pending_user";
-  code: string;
   planId: PlanId;
   userId: string | null;
   email: string | null;
@@ -36,7 +39,8 @@ export type FulfillResult = {
 
 type Ignored = { status: "ignored"; reason: string };
 
-const MIGRATION_HINT = "run drizzle/0003_activation_order.sql on the Hostinger MySQL database";
+const MIGRATION_HINT =
+  "run drizzle/0003_activation_order.sql and drizzle/0004_checkout_fulfillments.sql on the Hostinger MySQL database";
 
 export function logLicenseSchemaError(error: unknown, tag: string) {
   const code = error && typeof error === "object" && "code" in error ? String((error as { code?: unknown }).code) : "";
@@ -58,6 +62,14 @@ function normalizeEmail(value: string | null | undefined): string | null {
   return email || null;
 }
 
+function anchorDate(value: Date | string | null | undefined, fallback: Date): Date {
+  if (!value) return fallback;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? fallback : date;
+}
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 type Buyer = {
   id: string;
   membershipLevel: number | null;
@@ -65,11 +77,7 @@ type Buyer = {
   email: string | null;
 };
 
-async function findBuyer(
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-  userId: string | null,
-  email: string | null
-): Promise<Buyer | undefined> {
+async function findBuyer(tx: Tx, userId: string | null, email: string | null): Promise<Buyer | undefined> {
   const columns = {
     id: users.id,
     membershipLevel: users.membershipLevel,
@@ -89,13 +97,7 @@ async function findBuyer(
   return byEmail;
 }
 
-async function grant(
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-  userId: string,
-  planLevel: number,
-  anchor: Date,
-  durationDays: number
-) {
+async function grant(tx: Tx, userId: string, planLevel: number, anchor: Date, durationDays: number) {
   const [user] = await tx
     .select({
       id: users.id,
@@ -116,25 +118,110 @@ async function grant(
   return membershipLevel;
 }
 
-function resultFromRow(
-  row: {
-    code: string;
-    planId: string | null;
-    ownerUserId: string | null;
-    usedByEmail: string | null;
-    membershipLevel: number;
-    isUsed: boolean | null;
-  },
-  fallbackPlan: PlanId,
-  status: FulfillResult["status"]
-): FulfillResult {
+type LegacyRow = typeof activationCodes.$inferSelect;
+
+/** Finish a checkout that already has a historical activation_codes row. Does not insert another row. */
+async function applyLegacy(
+  tx: Tx,
+  existing: LegacyRow,
+  planId: PlanId,
+  planLevel: number,
+  requestedUserId: string | null,
+  email: string | null,
+): Promise<FulfillResult> {
+  const buyer = await findBuyer(tx, existing.ownerUserId || requestedUserId, email || existing.usedByEmail);
+  const resolvedPlan = isPlanId(existing.planId) ? existing.planId : planId;
+  if (existing.isUsed && existing.ownerUserId) {
+    return {
+      status: "duplicate",
+      planId: resolvedPlan,
+      userId: existing.ownerUserId,
+      email: existing.usedByEmail,
+      membershipLevel: existing.membershipLevel,
+    };
+  }
+  if (!buyer) {
+    return {
+      status: "pending_user",
+      planId: resolvedPlan,
+      userId: null,
+      email: existing.usedByEmail || email,
+      membershipLevel: existing.membershipLevel,
+    };
+  }
+  const anchor = existing.createdAt ? new Date(existing.createdAt) : new Date();
+  const membershipLevel = await grant(
+    tx,
+    buyer.id,
+    existing.membershipLevel || planLevel,
+    anchor,
+    existing.durationDays,
+  );
+  await tx
+    .update(activationCodes)
+    .set({
+      isUsed: true,
+      usedById: buyer.id,
+      usedByEmail: buyer.email || email,
+      usedAt: new Date(),
+      ownerUserId: buyer.id,
+    })
+    .where(eq(activationCodes.id, existing.id));
   return {
-    status,
-    code: row.code,
-    planId: isPlanId(row.planId) ? row.planId : fallbackPlan,
-    userId: row.ownerUserId,
-    email: row.usedByEmail,
-    membershipLevel: row.membershipLevel,
+    status: "applied",
+    planId,
+    userId: buyer.id,
+    email: buyer.email || email,
+    membershipLevel: membershipLevel ?? planLevel,
+  };
+}
+
+type FulfillmentRow = typeof checkoutFulfillments.$inferSelect;
+
+async function applyFulfillment(
+  tx: Tx,
+  row: FulfillmentRow,
+  planId: PlanId,
+  planLevel: number,
+  requestedUserId: string | null,
+  email: string | null,
+  purchasedAt: Date,
+): Promise<FulfillResult> {
+  if (row.appliedAt) {
+    return {
+      status: "duplicate",
+      planId: isPlanId(row.planId) ? row.planId : planId,
+      userId: row.userId,
+      email: row.email,
+      membershipLevel: row.membershipLevel,
+    };
+  }
+  const buyer = await findBuyer(tx, row.userId || requestedUserId, email || row.email);
+  if (!buyer) {
+    return {
+      status: "pending_user",
+      planId,
+      userId: null,
+      email: email || row.email,
+      membershipLevel: row.membershipLevel,
+    };
+  }
+  const anchor = anchorDate(row.purchasedAt, purchasedAt);
+  const membershipLevel = await grant(tx, buyer.id, row.membershipLevel || planLevel, anchor, row.durationDays);
+  await tx
+    .update(checkoutFulfillments)
+    .set({
+      appliedAt: new Date(),
+      userId: buyer.id,
+      email: buyer.email || email || row.email,
+    })
+    .where(eq(checkoutFulfillments.id, row.id));
+  return {
+    status: "applied",
+    planId,
+    userId: buyer.id,
+    email: buyer.email || email,
+    membershipLevel: membershipLevel ?? planLevel,
   };
 }
 
@@ -151,137 +238,54 @@ export async function fulfillCheckoutRecord(input: FulfillInput): Promise<Fulfil
   const email = normalizeEmail(input.email);
   const requestedUserId = input.userId?.trim() || null;
   const planLevel = planMembershipLevel(planId);
+  const purchasedAt = anchorDate(input.purchasedAt, new Date());
 
   return db.transaction(async (tx) => {
-    const [existing] = await tx
+    const [legacy] = await tx
       .select()
       .from(activationCodes)
       .where(eq(activationCodes.stripeSessionId, input.stripeSessionId))
       .limit(1)
       .for("update");
+    if (legacy) return applyLegacy(tx, legacy, planId, planLevel, requestedUserId, email);
 
-    const buyer = await findBuyer(tx, existing?.ownerUserId || requestedUserId, email || existing?.usedByEmail);
-
-    if (existing) {
-      if (existing.isUsed && existing.ownerUserId) {
-        return resultFromRow(existing, planId, "duplicate");
-      }
-      if (!buyer) return resultFromRow(existing, planId, "pending_user");
-      const anchor = existing.createdAt ? new Date(existing.createdAt) : new Date();
-      const membershipLevel = await grant(tx, buyer.id, existing.membershipLevel || planLevel, anchor, existing.durationDays);
-      await tx
-        .update(activationCodes)
-        .set({
-          isUsed: true,
-          usedById: buyer.id,
-          usedByEmail: buyer.email || email,
-          usedAt: new Date(),
-          ownerUserId: buyer.id,
-        })
-        .where(eq(activationCodes.id, existing.id));
-      return {
-        status: "applied" as const,
-        code: existing.code,
-        planId,
-        userId: buyer.id,
-        email: buyer.email || email,
-        membershipLevel: membershipLevel ?? planLevel,
-      };
-    }
+    const [existing] = await tx
+      .select()
+      .from(checkoutFulfillments)
+      .where(eq(checkoutFulfillments.stripeSessionId, input.stripeSessionId))
+      .limit(1)
+      .for("update");
+    if (existing) return applyFulfillment(tx, existing, planId, planLevel, requestedUserId, email, purchasedAt);
 
     const now = new Date();
-    let code = "";
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      code = generateLicenseCode(planId);
-      try {
-        await tx.insert(activationCodes).values({
-          code,
-          durationDays: STRIPE_LICENSE_DAYS,
-          membershipLevel: planLevel,
-          isUsed: false,
-          usedByEmail: buyer?.email || email,
-          usedById: null,
-          usedAt: null,
-          ownerUserId: null,
-          stripeSessionId: input.stripeSessionId,
-          planId,
-          createdAt: now,
-        });
-        break;
-      } catch (error) {
-        if (!isDuplicate(error) || attempt === 4) throw error;
-        const [raced] = await tx
-          .select()
-          .from(activationCodes)
-          .where(eq(activationCodes.stripeSessionId, input.stripeSessionId))
-          .limit(1);
-        if (!raced) continue;
-        if (raced.isUsed && raced.ownerUserId) return resultFromRow(raced, planId, "duplicate");
-        if (!buyer) return resultFromRow(raced, planId, "pending_user");
-        const anchor = raced.createdAt ? new Date(raced.createdAt) : now;
-        const membershipLevel = await grant(tx, buyer.id, raced.membershipLevel || planLevel, anchor, raced.durationDays);
-        await tx
-          .update(activationCodes)
-          .set({
-            isUsed: true,
-            usedById: buyer.id,
-            usedByEmail: buyer.email || email,
-            usedAt: now,
-            ownerUserId: buyer.id,
-          })
-          .where(eq(activationCodes.id, raced.id));
-        return {
-          status: "applied" as const,
-          code: raced.code,
-          planId,
-          userId: buyer.id,
-          email: buyer.email || email,
-          membershipLevel: membershipLevel ?? planLevel,
-        };
-      }
-    }
-
-    if (!isLicenseCode(code)) throw new Error("license_code");
-
-    if (!buyer) {
-      return {
-        status: "pending_user",
-        code,
+    try {
+      await tx.insert(checkoutFulfillments).values({
+        stripeSessionId: input.stripeSessionId,
         planId,
-        userId: null,
-        email,
         membershipLevel: planLevel,
-      };
+        durationDays: STRIPE_LICENSE_DAYS,
+        email,
+        userId: null,
+        purchasedAt,
+        appliedAt: null,
+        createdAt: now,
+      });
+    } catch (error) {
+      if (!isDuplicate(error)) throw error;
     }
 
-    const membershipLevel = await grant(tx, buyer.id, planLevel, now, STRIPE_LICENSE_DAYS);
-    await tx
-      .update(activationCodes)
-      .set({
-        isUsed: true,
-        usedById: buyer.id,
-        usedByEmail: buyer.email || email,
-        usedAt: now,
-        ownerUserId: buyer.id,
-      })
-      .where(eq(activationCodes.stripeSessionId, input.stripeSessionId));
-
-    return {
-      status: "applied",
-      code,
-      planId,
-      userId: buyer.id,
-      email: buyer.email || email,
-      membershipLevel: membershipLevel ?? planLevel,
-    };
+    const [row] = await tx
+      .select()
+      .from(checkoutFulfillments)
+      .where(eq(checkoutFulfillments.stripeSessionId, input.stripeSessionId))
+      .limit(1)
+      .for("update");
+    if (!row) throw new Error("fulfillment_row");
+    return applyFulfillment(tx, row, planId, planLevel, requestedUserId, email, purchasedAt);
   });
 }
 
-/** Bind a code that was stored before the account existed (same email). */
-export async function claimPendingLicenses(userId: string, email: string) {
-  const normalized = normalizeEmail(email);
-  if (!normalized) return;
-
+async function claimLegacyCodes(userId: string, normalized: string) {
   await db.transaction(async (tx) => {
     const pending = await tx
       .select()
@@ -290,8 +294,8 @@ export async function claimPendingLicenses(userId: string, email: string) {
         and(
           eq(activationCodes.isUsed, false),
           isNull(activationCodes.ownerUserId),
-          sql`lower(${activationCodes.usedByEmail}) = ${normalized}`
-        )
+          sql`lower(${activationCodes.usedByEmail}) = ${normalized}`,
+        ),
       )
       .for("update");
 
@@ -322,15 +326,58 @@ export async function claimPendingLicenses(userId: string, email: string) {
   });
 }
 
-export async function listUserLicenses(userId: string) {
-  return db
-    .select({
-      code: activationCodes.code,
-      planId: activationCodes.planId,
-      membershipLevel: activationCodes.membershipLevel,
-      createdAt: activationCodes.createdAt,
-    })
-    .from(activationCodes)
-    .where(or(eq(activationCodes.ownerUserId, userId), eq(activationCodes.usedById, userId)))
-    .orderBy(desc(activationCodes.createdAt));
+async function claimStoredFulfillments(userId: string, normalized: string) {
+  await db.transaction(async (tx) => {
+    const pending = await tx
+      .select()
+      .from(checkoutFulfillments)
+      .where(
+        and(
+          isNull(checkoutFulfillments.appliedAt),
+          isNull(checkoutFulfillments.userId),
+          sql`lower(${checkoutFulfillments.email}) = ${normalized}`,
+        ),
+      )
+      .for("update");
+
+    if (pending.length === 0) return;
+
+    const [user] = await tx
+      .select({ id: users.id, email: users.email })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1)
+      .for("update");
+    if (!user) return;
+
+    for (const row of pending) {
+      const anchor = anchorDate(row.purchasedAt, row.createdAt ? new Date(row.createdAt) : new Date());
+      await grant(tx, user.id, row.membershipLevel, anchor, row.durationDays);
+      await tx
+        .update(checkoutFulfillments)
+        .set({
+          appliedAt: new Date(),
+          userId: user.id,
+          email: user.email || normalized,
+        })
+        .where(eq(checkoutFulfillments.id, row.id));
+    }
+  });
+}
+
+/** Attach a paid checkout that arrived before this account existed. Historical codes and new fulfillment rows. */
+export async function claimPendingLicenses(userId: string, email: string) {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return;
+
+  try {
+    await claimLegacyCodes(userId, normalized);
+  } catch (error) {
+    logLicenseSchemaError(error, "LICENSE_CLAIM");
+  }
+  try {
+    await claimStoredFulfillments(userId, normalized);
+  } catch (error) {
+    logLicenseSchemaError(error, "FULFILLMENT_CLAIM");
+  }
 }

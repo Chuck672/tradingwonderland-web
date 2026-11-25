@@ -26,6 +26,7 @@ export function nextVipUntil(current: Date | null, grantEnd: Date): Date {
   return grantEnd;
 }
 
+/** Historical PRO-/ULTRA-/TWL- codes. New checkouts do not create these. */
 export function isLicenseCode(value: string): boolean {
   return /^(PRO|ULTRA|TWL)-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(value);
 }
@@ -63,6 +64,23 @@ export function isMembershipActive(
   if (!vipUntil) return true;
   const expiry = vipUntil instanceof Date ? vipUntil : new Date(vipUntil);
   return expiry.getTime() > now.getTime();
+}
+
+export type DesktopMembershipBlock = "unpaid" | "expired";
+
+/**
+ * Desktop sign-in allows PRO or ULTRA (`minLevel` 1). Null means the membership
+ * is active. A null, undefined, or "" `vipUntil` is non-expiring, the same rule
+ * as `isMembershipActive`. A concrete expiry that is not after `now` is expired.
+ */
+export function desktopMembershipBlock(
+  level: number,
+  vipUntil: Date | string | null | undefined,
+  now = new Date(),
+): DesktopMembershipBlock | null {
+  if (isMembershipActive(level, vipUntil, 1, now)) return null;
+  if ((level || 0) < 1) return "unpaid";
+  return "expired";
 }
 
 export function canDownloadDesktop(

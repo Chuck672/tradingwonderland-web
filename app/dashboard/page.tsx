@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { users } from "@/lib/schema";
 import { eq } from "drizzle-orm";
-import { claimPendingLicenses, listUserLicenses, logLicenseSchemaError } from "@/lib/fulfill-checkout";
+import { claimPendingLicenses } from "@/lib/fulfill-checkout";
 import DashboardClient from "./dashboard-client";
 
 export const dynamic = "force-dynamic";
@@ -25,22 +25,11 @@ export default async function DashboardPage({
   }
 
   if (user.email) {
-    try {
-      await claimPendingLicenses(user.id, user.email);
-    } catch (error) {
-      logLicenseSchemaError(error, "LICENSE_CLAIM");
-    }
+    await claimPendingLicenses(user.id, user.email);
   }
 
   const [fresh] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
   const current = fresh ?? user;
-
-  let licenses: { code: string; planId: string | null; membershipLevel: number }[] = [];
-  try {
-    licenses = await listUserLicenses(user.id);
-  } catch (error) {
-    logLicenseSchemaError(error, "LICENSE_LIST");
-  }
 
   const params = await searchParams;
   const downloadNotice = params.download === "unconfigured" || params.download === "forbidden" ? params.download : null;
@@ -52,5 +41,5 @@ export default async function DashboardPage({
     updatedAt: current.updatedAt ?? new Date(),
   };
 
-  return <DashboardClient user={safeUser} licenses={licenses} downloadNotice={downloadNotice} />;
+  return <DashboardClient user={safeUser} downloadNotice={downloadNotice} />;
 }

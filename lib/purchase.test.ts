@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { clearToolReleaseCache, DEFAULT_TOOLS_REPO, findReleaseAssetId, isBrowserDownloadUrl, isSignedReleaseHost, openGithubReleaseAsset, resolveRemoteDownload, resolveRemoteToolDownload, resolveToolReleaseConfig, safeDownloadFilename, TOOL_RELEASE_CACHE_MS, withPaymentLinkIdentity } from "./download-target.ts";
-import { canDownloadDesktop, grantUntil, isLicenseCode, isMembershipActive, nextMembershipLevel, nextVipUntil, planIdFromCheckout, planMembershipLevel, STRIPE_LICENSE_DAYS } from "./license.ts";
-import { generateLicenseCode } from "./license-code.ts";
+import { canDownloadDesktop, grantUntil, isMembershipActive, nextMembershipLevel, nextVipUntil, planIdFromCheckout, planMembershipLevel, STRIPE_LICENSE_DAYS } from "./license.ts";
 import { loginPathForPlan, safeCallbackPath } from "./return-path.ts";
 
 test("login return path keeps the plan and drops other targets", () => {
@@ -36,13 +35,6 @@ test("a webhook retry uses the original grant end and does not stack a year", ()
   assert.equal(replay.toISOString(), end.toISOString());
   const longer = new Date("2028-01-01T00:00:00.000Z");
   assert.equal(nextVipUntil(longer, end).toISOString(), longer.toISOString());
-});
-
-test("stripe license codes match the redeem format", () => {
-  assert.equal(isLicenseCode(generateLicenseCode("149")), true);
-  assert.equal(isLicenseCode(generateLicenseCode("349")), true);
-  assert.equal(generateLicenseCode("349").startsWith("ULTRA-"), true);
-  assert.equal(generateLicenseCode("149").startsWith("PRO-"), true);
 });
 
 test("desktop download is the $349 level and never a GitHub browse page", () => {
