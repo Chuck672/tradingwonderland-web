@@ -114,10 +114,34 @@ export const checkoutFulfillments = mysqlTable("checkout_fulfillments", {
   createdAt: datetime("createdAt").default(sql`CURRENT_TIMESTAMP`),
 });
 
+/**
+ * Computers signed in to PiTradingAgent.
+ * One membership may hold two rows. The same userId + deviceId is one computer.
+ */
+export const desktopDevices = mysqlTable(
+  "desktop_device",
+  {
+    id: varchar("id", { length: 255 })
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: varchar("userId", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    deviceId: varchar("deviceId", { length: 128 }).notNull(),
+    deviceName: varchar("deviceName", { length: 120 }),
+    createdAt: datetime("createdAt", { mode: "date" }).notNull(),
+    lastSeenAt: datetime("lastSeenAt", { mode: "date" }).notNull(),
+  },
+  (table) => ({
+    userDevice: uniqueIndex("desktop_device_userId_deviceId_unique").on(table.userId, table.deviceId),
+  }),
+);
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   accounts: many(accounts),
   sessions: many(sessions),
+  desktopDevices: many(desktopDevices),
   bbsUserProfile: one(bbsUserProfiles, {
     fields: [users.id],
     references: [bbsUserProfiles.userId],
@@ -141,6 +165,13 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
 export const sessionsRelations = relations(sessions, ({ one }) => ({
   user: one(users, {
     fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const desktopDevicesRelations = relations(desktopDevices, ({ one }) => ({
+  user: one(users, {
+    fields: [desktopDevices.userId],
     references: [users.id],
   }),
 }));

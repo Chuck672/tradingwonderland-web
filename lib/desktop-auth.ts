@@ -1,23 +1,42 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-/** Access tokens for PiTradingAgent. One hour, then the app signs in again. */
+/** Access tokens for PiTradingAgent. One hour, then the app uses its refresh token. */
 export const DESKTOP_JWT_TTL_SECONDS = 60 * 60;
+
+/**
+ * Password login starts this window. A refresh mints a new access token and a
+ * replacement refresh token that keeps the same expiry. It does not slide.
+ */
+export const DESKTOP_REFRESH_TTL_SECONDS = 60 * 24 * 60 * 60;
+
+export const DESKTOP_ACCESS_AUDIENCE = "pitradingagent";
+export const DESKTOP_REFRESH_AUDIENCE = "pitradingagent-refresh";
+
+const DEVICE_ID_PATTERN = /^[\x21-\x7E]{1,128}$/;
 
 export const DESKTOP_LOGIN_EMAIL_LIMIT = 8;
 export const DESKTOP_LOGIN_IP_LIMIT = 40;
 export const DESKTOP_LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
 const ISSUER = "quantlogiclab-desktop";
-const AUDIENCE = "pitradingagent";
+
+export type DesktopTokenUse = "access" | "refresh";
 
 export type DesktopTokenClaims = {
   sub: string;
   email: string;
+  deviceId: string;
+  tokenUse: DesktopTokenUse;
   iat: number;
   exp: number;
   iss: typeof ISSUER;
-  aud: typeof AUDIENCE;
+  aud: typeof DESKTOP_ACCESS_AUDIENCE | typeof DESKTOP_REFRESH_AUDIENCE;
 };
+
+/** Visible ASCII, 1–128 characters. The desktop app must send this same string every time. */
+export function isDesktopDeviceId(value: string): boolean {
+  return DEVICE_ID_PATTERN.test(value);
+}
 
 type Env = Record<string, string | undefined>;
 
@@ -34,18 +53,20 @@ function b64url(data: string) {
 }
 
 export function signDesktopToken(
-  input: { sub: string; email: string },
+  input: { sub: string; email: string; deviceId: string; tokenUse: DesktopTokenUse },
   secret: string,
   nowSec: number,
-  ttlSec = DESKTOP_JWT_TTL_SECONDS,
+  ttlSec = input.tokenUse === "refresh" ? DESKTOP_REFRESH_TTL_SECONDS : DESKTOP_JWT_TTL_SECONDS,
 ): string {
   const header = b64url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
   const payload = b64url(
     JSON.stringify({
       sub: input.sub,
       email: input.email,
+      deviceId: input.deviceId,
+      use: input.tokenUse,
       iss: ISSUER,
-      aud: AUDIENCE,
+      aud: input.tokenUse === "refresh" ? DESKTOP_REFRESH_AUDIENCE : DESKTOP_ACCESS_AUDIENCE,
       iat: nowSec,
       exp: nowSec + ttlSec,
     }),
@@ -59,6 +80,7 @@ export function verifyDesktopToken(
   token: string,
   secret: string,
   nowSec: number,
+  expectedUse: DesktopTokenUse = "access",
 ): { ok: true; claims: DesktopTokenClaims } | { ok: false; reason: "invalid" | "expired" } {
   const parts = token.split(".");
   if (parts.length !== 3 || parts.some((part) => part.length === 0)) {
@@ -72,7 +94,16 @@ export function verifyDesktopToken(
   }
 
   let header: { alg?: unknown };
-  let payload: Partial<DesktopTokenClaims>;
+  let payload: {
+    sub?: unknown;
+    email?: unknown;
+    deviceId?: unknown;
+    use?: unknown;
+    iss?: unknown;
+    aud?: unknown;
+    iat?: unknown;
+    exp?: unknown;
+  };
   try {
     header = JSON.parse(Buffer.from(parts[0], "base64url").toString("utf8"));
     payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
@@ -80,10 +111,13 @@ export function verifyDesktopToken(
     return { ok: false, reason: "invalid" };
   }
 
+  const expectedAud = expectedUse === "refresh" ? DESKTOP_REFRESH_AUDIENCE : DESKTOP_ACCESS_AUDIENCE;
   if (header.alg !== "HS256") return { ok: false, reason: "invalid" };
-  if (payload.iss !== ISSUER || payload.aud !== AUDIENCE) return { ok: false, reason: "invalid" };
+  if (payload.iss !== ISSUER || payload.aud !== expectedAud) return { ok: false, reason: "invalid" };
+  if (payload.use !== expectedUse) return { ok: false, reason: "invalid" };
   if (typeof payload.sub !== "string" || payload.sub.length === 0) return { ok: false, reason: "invalid" };
   if (typeof payload.email !== "string" || payload.email.length === 0) return { ok: false, reason: "invalid" };
+  if (typeof payload.deviceId !== "string" || !isDesktopDeviceId(payload.deviceId)) return { ok: false, reason: "invalid" };
   if (typeof payload.exp !== "number" || typeof payload.iat !== "number") return { ok: false, reason: "invalid" };
   if (payload.exp <= nowSec) return { ok: false, reason: "expired" };
 
@@ -92,10 +126,12 @@ export function verifyDesktopToken(
     claims: {
       sub: payload.sub,
       email: payload.email,
+      deviceId: payload.deviceId,
+      tokenUse: expectedUse,
       iat: payload.iat,
       exp: payload.exp,
       iss: ISSUER,
-      aud: AUDIENCE,
+      aud: expectedAud,
     },
   };
 }
