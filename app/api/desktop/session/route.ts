@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
+import { desktopDeviceDirectory } from "@/lib/desktop-device-db";
 import { handleDesktopSession } from "@/lib/desktop-login";
 import { db } from "@/lib/db";
 import { users } from "@/lib/schema";
@@ -24,6 +25,7 @@ export async function GET(req: NextRequest) {
           .limit(1);
         return user ?? null;
       },
+      devices: desktopDeviceDirectory,
     });
   } catch (error) {
     const code = error && typeof error === "object" && "code" in error ? String((error as { code?: unknown }).code) : "";

@@ -36,6 +36,13 @@
       "when": 1795564800000,
       "tag": "0004_checkout_fulfillments",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1795852800000,
+      "tag": "0005_desktop_device",
+      "breakpoints": true
     }
   ]
 }

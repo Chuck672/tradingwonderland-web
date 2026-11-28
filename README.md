@@ -107,23 +107,99 @@ Database (already required for login): `DATABASE_URL`. Apply `drizzle/0004_check
 
 PiTradingAgent's Electron main process signs in with the website email and password. This is not a browser session and it does not call `/api/auth/[...nextauth]`.
 
-`POST /api/desktop/login` accepts JSON `{ "email", "password" }`. The password check is the same user lookup and bcrypt compare as the website Credentials provider. On success the response is a Bearer JWT plus `email`, `membershipLevel`, and `vipUntil`.
+A paid member is `isMembershipActive(membershipLevel, vipUntil, 1)`: PRO or ULTRA, and the expiry is still in the future. **A null, missing, or blank `vipUntil` is non-expiring**, which is the same rule the download and dashboard helpers already use. The JSON field is `null` in that case. A level below 1 is `unpaid`. A past `vipUntil` is `membership_expired`. An account with no password hash (Google-only until a password is set) is `password_not_set`. A wrong email or password is `invalid_credentials`. Too many attempts is `429 rate_limited`. Login, session, and refresh all use that membership rule.
 
-A paid member is `isMembershipActive(membershipLevel, vipUntil, 1)`: PRO or ULTRA, and the expiry is still in the future. **A null, missing, or blank `vipUntil` is non-expiring**, which is the same rule the download and dashboard helpers already use. The JSON field is `null` in that case. A level below 1 is `unpaid`. A past `vipUntil` is `membership_expired`. An account with no password hash (Google-only until a password is set) is `password_not_set`. A wrong email or password is `invalid_credentials`. Too many attempts is `429 rate_limited`.
+One paid membership can be registered on **2 computers**. The desktop app sends a stable `deviceId` (1–128 visible ASCII characters, no spaces). The same `deviceId` updates `lastSeenAt` and does not take a second slot. A third distinct `deviceId` is `device_limit` and receives the computers already registered. Signing in again with `revokeDeviceId` removes one of those computers and registers the new one in the same request. The account still ends with at most 2 computers.
 
-`GET /api/desktop/session` reads `Authorization: Bearer <token>`, checks the signature, and loads the user again. It returns the same membership fields when the membership is still active.
+Apply `drizzle/0005_desktop_device.sql` in phpMyAdmin on database `u904162120_QuantLogicLab` before deploying these routes. The script creates `desktop_device` only when that table is missing. It contains no password or secret.
 
-The token is HS256, lasts one hour (`expiresAt`), and is signed with `DESKTOP_JWT_SECRET`. It is not signed with `NEXTAUTH_SECRET`. The route does not read or write NextAuth cookies. Requests that send an `Origin` header or browser `Sec-Fetch-*` headers are rejected, and the response does not set `Access-Control-Allow-Origin`. Use Node `fetch` in the Electron main process so those headers are absent. Chromium `net.fetch` often sends an `Origin` and is rejected on purpose.
+### `POST /api/desktop/login`
 
-Sign-in attempts are limited per process: 8 per 15 minutes for an IP plus email, and 40 per 15 minutes for that IP. A restart clears the counters.
+Password check matches the website Credentials provider. The body is JSON. `deviceName` and `revokeDeviceId` may be omitted. A blank `deviceName` leaves the stored name unchanged. `revokeDeviceId` is how the new computer removes an old one before it has a token.
+
+```json
+{
+  "email": "member@example.com",
+  "password": "secret",
+  "deviceId": "9f2c1c0e-7b3a-4d1e-9a55-0c1b2a3d4e5f",
+  "deviceName": "Office PC",
+  "revokeDeviceId": "older-device-id"
+}
+```
+
+Success `200`:
+
+```json
+{
+  "token": "<access jwt>",
+  "refreshToken": "<refresh jwt>",
+  "tokenType": "Bearer",
+  "expiresAt": "2026-11-25T18:00:00.000Z",
+  "refreshExpiresAt": "2027-01-24T17:00:00.000Z",
+  "deviceId": "9f2c1c0e-7b3a-4d1e-9a55-0c1b2a3d4e5f",
+  "email": "member@example.com",
+  "membershipLevel": 1,
+  "vipUntil": null
+}
+```
+
+`token` is the access token (1 hour, `expiresAt`). `refreshToken` expires 60 days after this password login (`refreshExpiresAt`). A later refresh keeps that same `refreshExpiresAt`. Another password login starts a new 60-day window.
+
+`device_limit` is `403`. `devices` is the existing computers, newest `lastSeenAt` first, so the app can show them and send one `id` back as `revokeDeviceId`:
+
+```json
+{
+  "error": "device_limit",
+  "message": "This membership is already signed in on 2 computers.",
+  "devices": [
+    { "id": "device-b", "name": "Home PC", "lastSeenAt": "2026-11-25T17:00:00.000Z" },
+    { "id": "device-a", "name": "Office PC", "lastSeenAt": "2026-11-20T17:00:00.000Z" }
+  ]
+}
+```
+
+`device_not_found` is `400` when `revokeDeviceId` is not one of those computers. The body includes the same `devices` array and does not register the new computer.
+
+Other login errors: `invalid_request` `400`, `invalid_credentials` `401`, `password_not_set` `403`, `unpaid` `403`, `membership_expired` `403`, `rate_limited` `429` with `Retry-After`, `browser_origin` `403`, `unconfigured` `503`, `server` `500`.
+
+### `GET /api/desktop/session`
+
+`Authorization: Bearer <access token>`. The route checks the signature, loads the user, checks the membership, and checks that this token's `deviceId` is still registered. It does not return a new token.
+
+Success `200`: `{ "email", "membershipLevel", "vipUntil", "expiresAt" }`.
+
+`token_expired` `401` means the one-hour access token lapsed; call refresh. `device_revoked` `401` means this computer was removed; call login with the password. `invalid_token` `401`, `unpaid` `403`, and `membership_expired` `403` are unchanged.
+
+### `POST /api/desktop/refresh`
+
+Silent renewal. The body is JSON. There is no password and no `Authorization` header. The `deviceId` must be the one inside the refresh token, and that computer must already be registered. This route does not insert a computer, so a third computer cannot refresh its way in.
+
+```json
+{
+  "refreshToken": "<refresh jwt>",
+  "deviceId": "9f2c1c0e-7b3a-4d1e-9a55-0c1b2a3d4e5f"
+}
+```
+
+Success `200` uses the same shape as login. `expiresAt` is one hour from this call. `refreshExpiresAt` is the original 60-day deadline, not a new one. Replace the stored access token. The returned `refreshToken` is a replacement with that same deadline; older refresh tokens for this computer also keep working until that deadline or until the computer is removed.
+
+`token_expired` `401` means the 60 days are over; ask for the password. `device_revoked` `401` means this computer is not registered; ask for the password. `invalid_token` `401` covers a bad token, an access token presented here, or a `deviceId` that does not match the token. `unpaid` and `membership_expired` are `403`. A removed computer cannot mint another access token.
+
+### Tokens
+
+Both tokens are HS256 and are signed with `DESKTOP_JWT_SECRET`. They are not signed with `NEXTAUTH_SECRET`. Access tokens use `aud` `pitradingagent` and claim `use` `access`. Refresh tokens use `aud` `pitradingagent-refresh` and claim `use` `refresh`. Both include `sub`, `email`, `deviceId`, `iss` `quantlogiclab-desktop`, `iat`, and `exp`. An access token is rejected by the refresh route, and a refresh token is rejected by session.
+
+The routes do not read or write NextAuth cookies. Requests that send an `Origin` header or browser `Sec-Fetch-*` headers are rejected, and the response does not set `Access-Control-Allow-Origin`. Use Node `fetch` in the Electron main process so those headers are absent. Chromium `net.fetch` often sends an `Origin` and is rejected on purpose.
+
+Sign-in attempts are limited per process: 8 per 15 minutes for an IP plus email, and 40 per 15 minutes for that IP. A restart clears the counters. Refresh does not consume that counter.
 
 ### Hostinger environment variable
 
 Set this on the quantlogiclab.com Node site (hPanel → Websites → Environment variables) after merge, then redeploy when you choose to ship. This change does not deploy production.
 
-- `DESKTOP_JWT_SECRET` — required for `/api/desktop/login` and `/api/desktop/session`. A random string of at least 32 characters. It must be different from `NEXTAUTH_SECRET`. If it is missing, too short, or equal to `NEXTAUTH_SECRET`, those routes return `503` and the website login is unchanged. Do not commit a value.
+- `DESKTOP_JWT_SECRET` — required for `/api/desktop/login`, `/api/desktop/session`, and `/api/desktop/refresh`. A random string of at least 32 characters. It must be different from `NEXTAUTH_SECRET`. If it is missing, too short, or equal to `NEXTAUTH_SECRET`, those routes return `503` and the website login is unchanged. Do not commit a value. Refresh uses this same secret. Do not add another one.
 
-No other new secret is required. `DATABASE_URL` and `NEXTAUTH_SECRET` stay as they are. Apply `drizzle/0004_checkout_fulfillments.sql` in phpMyAdmin before the fulfillment code is deployed.
+No other new secret is required. `DATABASE_URL` and `NEXTAUTH_SECRET` stay as they are. Apply `drizzle/0004_checkout_fulfillments.sql` in phpMyAdmin before the fulfillment code is deployed, and `drizzle/0005_desktop_device.sql` before the device routes are deployed.
 
 ## www.quantlogiclab.com
 

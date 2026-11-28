@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { verifyEmailPassword } from "@/lib/credentials";
+import { desktopDeviceDirectory } from "@/lib/desktop-device-db";
 import { handleDesktopLogin } from "@/lib/desktop-login";
 
 export const runtime = "nodejs";
@@ -22,6 +23,7 @@ export async function POST(req: NextRequest) {
           },
         };
       },
+      devices: desktopDeviceDirectory,
     });
   } catch (error) {
     const code = error && typeof error === "object" && "code" in error ? String((error as { code?: unknown }).code) : "";
